@@ -1,9 +1,15 @@
 #ES6 Promise polyfill
 
-To use the Promise polyfill, just drop a single JavaScript file into your page:
+To use the Promise polyfill, just drop two JavaScript files into your page:
 ```html
+<script src="setimmediate.js"></script>
 <script src="promise.js"></script>
 ```
+or load as the Node.js module:
+```javascript
+var Promise = require('promise').Promise;
+```
+
 Download the [latest Promise polyfill from GitHub](https://raw.githubusercontent.com/Octane/Promise/master/promise.js).
 
 ##Dependencies
