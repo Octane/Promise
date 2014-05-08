@@ -216,7 +216,7 @@
     };
 
     if (global.module && module.exports) {
-            module.exports = globalPromise;
+        module.exports = globalPromise;
     } else {
         global.Promise = globalPromise;
     }
