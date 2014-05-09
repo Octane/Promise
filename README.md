@@ -7,7 +7,7 @@ To use the Promise polyfill, just drop two JavaScript files into your page:
 ```
 or load as the Node.js module:
 ```javascript
-var Promise = require('promise').Promise;
+var Promise = require('es6-promises').Promise;
 ```
 
 Download the [latest Promise polyfill from GitHub](https://raw.githubusercontent.com/Octane/Promise/master/promise.js).
