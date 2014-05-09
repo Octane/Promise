@@ -15,16 +15,7 @@
         </a>
     </h1>
 
-    <!--[if IE 8]>
-        <script src="setimmediate/setimmediate-ie8.js"></script>
-    <![endif]-->
-
-    <script src="setimmediate/setimmediate.js"></script>
-    <script src="promise.js"></script>
-
     <script>
-
-        //for IE8
         try {
             console.log;
         }
@@ -32,13 +23,17 @@
             window.console = {
                 log: function () {
                     var pre = document.createElement('pre');
-                    pre.append(Array.join(arguments, ', '));
-                    document.body.append(pre);
+                    pre.appendChild(document.createTextNode(
+                        Array.prototype.join.call(arguments, ', ')
+                    ));
+                    document.body.appendChild(pre);
                 }
             };
         }
+    </script>
 
-        //for IE8
+    <!--[if IE 8]>
+    <script>
         if (!Array.prototype.forEach) {
             Array.prototype.forEach = function (func, boundThis) {
                 var length = this.length,
@@ -51,8 +46,6 @@
                 }
             };
         }
-
-        //for IE8
         if (!Array.prototype.every) {
             Array.prototype.every = function (func, boundThis) {
                 var length = this.length,
@@ -66,175 +59,235 @@
                 return true;
             };
         }
+    </script>
+    <script src="setimmediate/setimmediate-ie8.js"></script>
+    <![endif]-->
 
-        console.log('Promise polyfill tests:');
+    <script src="setimmediate/setimmediate.js"></script>
+    <script src="promise.js"></script>
+    <script>
 
-        (function () {
-            var x = 0,
-                p1 = new Promise(function () {
-                    x = 1;
-                }),
-                p2 = new Promise(function () {
-                    console.log('call resolver sync: ', x == 1);
+        function test(desc, tester) {
+            return new Promise(function (resolve, reject) {
+                var settled = false;
+                tester(function (result) {
+                    settled = true;
+                    if (result) {
+                        resolve(desc);
+                    } else {
+                        reject(new Error(desc));
+                    }
                 });
-        }());
-
-        (function () {
-            var callCount = 0;
-            new Promise(function () {
-                console.log('call resolver once: ', callCount == 0);
-                callCount++;
-            }).then().then().then().then();
-        }());
-
-        (function () {
-            var x = 0;
-            new Promise(function (resolve) {
-                resolve();
-            }).then(function () {
-                x = 1;
+                setTimeout(function () {
+                    if (!settled) {
+                        reject(new Error(desc));
+                    }
+                }, 3000);
             });
-            console.log('fulfill async: ', x == 0);
-        }());
+        }
 
-        (function () {
-            var x = 0;
-            new Promise(function (resolve, reject) {
-                reject();
-            }).then(function () {
-                x = 1;
-            });
-            console.log('reject async: ', x == 0);
-        }());
+        Promise.all([
 
-        new Promise(function (resolve, reject) {
-            throw Error('test error');
-        }).then(function () {
-            console.log('reject resolver error1:', false);
-        }, function (reason) {
-            console.log('reject resolver error1: ', true);
-        });
+            test('call resolver sync', function (assert) {
+                var x = 0,
+                    p1 = new Promise(function () {
+                        x = 1;
+                    }),
+                    p2 = new Promise(function () {
+                        assert(x == 1);
+                    });
+            }),
 
-        new Promise(function (resolve, reject) {
-            reject(new Error('another test error'));
-            throw new Error('test error');
-        }).then(function () {
-            console.log('reject resolver error2:', false);
-        }, function (reason) {
-            console.log('reject resolver error2: ', true);
-        });
+            test('call resolver once', function (assert) {
+                var callCount = 0;
+                new Promise(function () {
+                    assert(callCount == 0);
+                    callCount++;
+                }).then().then().then().then();
+            }),
 
-        new Promise(function (resolve, reject) {
-            resolve();
-            throw new Error('test error');
-        }).then(function () {
-            console.log('no reject resolver error3:', true);
-        }, function (reason) {
-            console.log('no reject resolver error3:', false);
-        });
+            test('fulfill async', function (assert) {
+                var x = 0;
+                new Promise(function (resolve) {
+                    resolve();
+                }).then(function () {
+                    x = 1;
+                });
+                assert(x == 0);
+            }),
 
-        new Promise(function (resolve, reject) {
-            resolve();
-            reject();
-            resolve();
-            reject();
-        }).then(function () {
-            console.log('call something one (resolve or reject):', true);
-        }, function (reason) {
-            console.log('call something one (resolve or reject):', false);
-        });
+            test('reject async', function (assert) {
+                var x = 0;
+                new Promise(function (resolve, reject) {
+                    reject();
+                })['catch'](function () {
+                    x = 1;
+                });
+                assert(x == 0);
+            }),
 
-        new Promise(function (resolve, reject) {
-            reject();
-            resolve();
-            reject();
-            resolve();
-        }).then(function () {
-            console.log('call something one (resolve or reject):', false);
-        }, function (reason) {
-            console.log('call something one (resolve or reject): ', true);
-        });
+            test('reject resolver error', function (assert) {
+                new Promise(function (resolve, reject) {
+                    throw Error('resolver error');
+                }).then(function () {
+                    assert(false);
+                }, function (reason) {
+                    assert(true);
+                });
+            }),
 
-        (function () {
-            var callCount = 0;
-            new Promise(function (resolve) {
-                resolve();
-                resolve();
-                resolve();
-            }).then(function () {
-                console.log('fulfill once: ', callCount == 0);
-                callCount++;
-            });
-        }());
+            test('no reject resolver error', function (assert) {
+                new Promise(function (resolve, reject) {
+                    resolve();
+                    throw new Error('resolver error');
+                }).then(function () {
+                    assert(true);
+                }, function (reason) {
+                    assert(false);
+                });
+            }),
 
-        (function () {
-            var callCount = 0;
-            new Promise(function (resolve, reject) {
-                reject();
-                reject();
-                reject();
-            })['catch'](function () {
-                console.log('reject once: ', callCount == 0);
-                callCount++;
-            });
-        }());
+            test('call something one (resolve first)', function (assert) {
+                new Promise(function (resolve, reject) {
+                    resolve();
+                    reject();
+                    resolve();
+                    reject();
+                }).then(function () {
+                    assert(true);
+                }, function (reason) {
+                    assert(false);
+                });
+            }),
 
-        (function () {
-            var p = new Promise(function (resolve) {
-                    resolve(5);
-                }).then(function (val) {
-                    p.then(function (val) {
+            test('call something one (reject first)', function (assert) {
+                new Promise(function (resolve, reject) {
+                    reject();
+                    resolve();
+                    reject();
+                    resolve();
+                }).then(function () {
+                    assert(false);
+                }, function (reason) {
+                    assert(true);
+                });
+            }),
+
+            test('fulfill once', function (assert) {
+                var callCount = 0;
+                new Promise(function (resolve) {
+                    resolve();
+                    resolve();
+                    resolve();
+                }).then(function () {
+                    assert(callCount == 0);
+                    callCount++;
+                });
+            }),
+
+            test('reject once', function (assert) {
+                var callCount = 0;
+                new Promise(function (resolve, reject) {
+                    reject();
+                    reject();
+                    reject();
+                })['catch'](function () {
+                    assert(callCount == 0);
+                    callCount++;
+                });
+            }),
+
+            test('settled thenable', function (assert) {
+                var success = false,
+                    p = new Promise(function (resolve) {
+                        resolve(5);
+                    }).then(function (val) {
                         p.then(function (val) {
                             p.then(function (val) {
-                                console.log('settled thenable: ', val == 5);
+                                p.then(function (val) {
+                                    success = val == 5;
+                                });
+                                return val;
                             });
                             return val;
                         });
                         return val;
                     });
-                    return val;
+                setTimeout(function () {
+                    assert(success);
+                }, 100);
+            }),
+
+            test('onFulfilled return promise', function (assert) {
+                var success = false;
+                new Promise(function (resolve) {
+                    resolve();
+                }).then(function () {
+                    return new Promise(function (resolve) {
+                        resolve();
+                    });
+                }).then(function () {
+                    success = true;
                 });
-        }());
+                setTimeout(function () {
+                    assert(success);
+                }, 100);
+            }),
 
-        /* Chrome and Firefox work differently
-        new Promise(function (resolve) {
-            resolve();
-        }).then(new Promise(function (resolve) {
-            resolve();
-        })).then(function () {
-            console.log('!!!!!!!!!!then(promise): ', true);
+            test('onRejected return promise', function (assert) {
+                var success = false;
+                new Promise(function (resolve, reject) {
+                    resolve();
+                })['catch'](function () {
+                    return new Promise(function (resolve) {
+                        resolve();
+                    });
+                }).then(function () {
+                    success = true;
+                });
+                setTimeout(function () {
+                    assert(success);
+                }, 200);
+            }),
+
+            //todo fix polyfill
+            /*test('return fulfilled promise', function (assert) {
+                var p1 = Promise.resolve(1),
+                    p2 = Promise.resolve(2),
+                    success = false;
+                p1.then(function () {
+                    return p2;
+                }).then(function (value) {
+                    success = value == 2;
+                });
+                setTimeout(function () {
+                    assert(success);
+                }, 100);
+            }),*/
+
+            //Chrome and Firefox work differently
+            /*test('then(promise)', function (assert) {
+                var p1 = new Promise(function (resolve) {
+                        resolve();
+                    }),
+                    p2 = new Promise(function (resolve) {
+                        resolve();
+                    });
+
+                p1.then(p2).then(function () {
+                    assert(true); //Aurora 31
+                }, function () {
+                    assert(false); //Chrome 36
+                });
+            })*/
+
+        ]).then(function () {
+            console.log('All tests completed successfully.');
+        }, function (reason) {
+            console.log(reason);
         });
-        */
 
-        new Promise(function (resolve, reject) {
-            reject(new Error('test'));
-        })['catch'](new Promise(function (resolve) {
-            resolve();
-        })).then(function () {
-            console.log('catch(promise): FAIL!');
-        });
-
-        new Promise(function (resolve) {
-            resolve();
-        }).then(function () {
-            return new Promise(function (resolve) {
-                resolve();
-            });
-        }).then(function () {
-            console.log('onFulfilled return promise: ', true);
-        });
-
-        new Promise(function (resolve, reject) {
-            resolve();
-        })['catch'](function () {
-            return new Promise(function (resolve) {
-                resolve();
-            });
-        }).then(function () {
-            console.log('onRejected return promise: ', true);
-        });
-
-     </script>
+    </script>
 
 </body>
 </html>
