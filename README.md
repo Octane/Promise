@@ -12,6 +12,15 @@ var Promise = require('promise').Promise;
 
 Download the [latest Promise polyfill from GitHub](https://raw.githubusercontent.com/Octane/Promise/master/promise.js).
 
+**npm**
+```shell
+npm install es6-promises
+```
+**Bower**
+```shell
+bower install promises
+```
+
 ##Dependencies
 
  - The Promise polyfill requieres `setImmediate` ([msdn](http://msdn.microsoft.com/en-us/library/ie/hh773176(v=vs.85).aspx), [nodejs](http://nodejs.org/api/timers.html#timers_setimmediate_callback_arg), [polyfill](https://github.com/Octane/setImmediate/)).
