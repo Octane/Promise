@@ -27,6 +27,7 @@
     ".gitignore",
     ".gitmodules",
     "bower.json",
+    "package.json",
     "index.html",
     "LICENSE"
   ],
