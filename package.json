@@ -1,5 +1,5 @@
 {
-  "name": "promise",
+  "name": "es6-promises",
   "version": "1.0.0",
   "description": "ES6 Promise polyfill",
   "main": "promise.js",
