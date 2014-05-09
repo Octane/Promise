@@ -204,7 +204,11 @@
             }
 
             return new Promise(function (resolve, reject) {
-                promise._enqueue(resolve, reject);
+                if (promise._fulfilled || promise._rejected) {
+                    promise.then(resolve, reject);
+                } else {
+                    promise._enqueue(resolve, reject);
+                }
             }, true);
 
         },

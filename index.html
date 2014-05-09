@@ -250,8 +250,7 @@
                 }, 200);
             }),
 
-            //todo fix polyfill
-            /*test('return fulfilled promise', function (assert) {
+            test('return fulfilled promise', function (assert) {
                 var p1 = Promise.resolve(1),
                     p2 = Promise.resolve(2),
                     success = false;
@@ -263,7 +262,44 @@
                 setTimeout(function () {
                     assert(success);
                 }, 100);
-            }),*/
+            }),
+
+            test('return rejected promise', function (assert) {
+                var p1 = Promise.reject(1),
+                    p2 = Promise.reject(2),
+                    success = false;
+                p1.then(function () {
+                    return p2;
+                })['catch'](function (reason) {
+                    success = reason == 1;
+                });
+                setTimeout(function () {
+                    assert(success);
+                }, 100);
+            }),
+
+            test('return self', function (assert) {
+                var success = false,
+                    p = Promise.resolve(1);
+                p.then(function () {
+                    return p;
+                }).then(function () {
+                    success = true;
+                });
+                setTimeout(function () {
+                    assert(success);
+                }, 100);
+            }),
+
+            test('save initial value', function (assert) {
+                var p = Promise.resolve(1);
+                p.then(function () {
+                    return 5;
+                });
+                p.then(function (value) {
+                    assert(value == 1);
+                })
+            }),
 
             //Chrome and Firefox work differently
             /*test('then(promise)', function (assert) {
@@ -279,12 +315,14 @@
                 }, function () {
                     assert(false); //Chrome 36
                 });
-            })*/
+            }),*/
+
+            Promise.resolve(),
 
         ]).then(function () {
             console.log('All tests completed successfully.');
         }, function (reason) {
-            console.log(reason);
+            console.log(reason.toString());
         });
 
     </script>
