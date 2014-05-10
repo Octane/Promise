@@ -301,6 +301,110 @@
                 })
             }),
 
+            test('save initial reason', function (assert) {
+                var initialReason = new Error('initial error'),
+                    p = new Promise(function (resolve, reject) {
+                        reject(initialReason);
+                    });
+                p['catch'](function (reason) {
+                    throw Error('other error');
+                });
+                p['catch'](function (reason) {
+                    assert(reason == initialReason);
+                });
+            }),
+
+            test('transfer values', function (assert) {
+                Promise.resolve(1).then(function (value) {
+                    return value + 1;
+                }).then(function (value) {
+                    return value + 1;
+                }).then(function (value) {
+                    assert(value == 3);
+                })
+            }),
+
+            test('transfer reasons', function (assert) {
+                var initialReason = new Error('initial error');
+                Promise.reject(initialReason)['catch'](function (reason) {
+                    throw reason;
+                })['catch'](function (reason) {
+                    throw reason;
+                })['catch'](function (reason) {
+                    assert(reason == initialReason);
+                });
+            }),
+
+            test('await resolve', function (assert) {
+                new Promise(function (resolve) {
+                    setTimeout(resolve, 100);
+                }).then(function () {
+                    assert(true);
+                });
+            }),
+
+            test('await reject', function (assert) {
+                new Promise(function (resolve, reject) {
+                    setTimeout(reject, 100);
+                })['catch'](function () {
+                    assert(true);
+                });
+            }),
+
+            test('onFulfilled error', function (assert) {
+                Promise.resolve().then(function () {
+                    throw new Error('test error');
+                })['catch'](function () {
+                    assert(true);
+                });
+            }),
+
+            test('onRejected error', function (assert) {
+                Promise.reject()['catch'](function () {
+                    throw new Error('test error');
+                })['catch'](function () {
+                    assert(true);
+                });
+            }),
+
+            test('race', function (assert) {
+                var p1 = new Promise(function (resolve) {
+                        setTimeout(function () {
+                            resolve(1);
+                        }, 150);
+                    }),
+                    p2 = new Promise(function (resolve) {
+                        setTimeout(function () {
+                            resolve(2);
+                        }, 50);
+                    }),
+                    p3 = new Promise(function (resolve) {
+                        setTimeout(function () {
+                            resolve(3);
+                        }, 100);
+                    });
+                Promise.race([p1, p2, p3]).then(function (value) {
+                    assert(value == 2);
+                });
+            }),
+
+            test('resolve(promise)', function (assert) {
+                Promise.resolve(new Promise(function (resolve) {
+                    resolve(1);
+                })).then(function (value) {
+                    assert(value == 1);
+                });
+            }),
+
+            test('reject(promise)', function (assert) {
+                var p = new Promise(function (resolve) {
+                        resolve(1);
+                    });
+                Promise.reject(p)['catch'](function (value) {
+                    assert(value == p);
+                });
+            }),
+
             //Chrome and Firefox work differently
             /*test('then(promise)', function (assert) {
                 var p1 = new Promise(function (resolve) {
