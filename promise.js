@@ -1,5 +1,5 @@
 /**
- * Promise polyfill v1.0.1
+ * Promise polyfill v1.0.2
  * requires setImmediate
  *
  * © 2014 Dmitry Korobkin
@@ -160,13 +160,13 @@
                         try {
                             value = onFulfilled(promise._value);
                         } catch (error) {
-                            setImmediate(reject, error);
+                            reject(error);
                             return;
                         }
                         if (isPromise(value)) {
                             value.then(resolve, reject);
                         } else {
-                            setImmediate(resolve, value);
+                            resolve(value);
                         }
                     });
                 }
@@ -177,13 +177,13 @@
                         try {
                             reason = onRejected(promise._reason);
                         } catch (error) {
-                            setImmediate(reject, error);
+                            reject(error);
                             return;
                         }
                         if (isPromise(reason)) {
                             reason.then(resolve, reject);
                         } else {
-                            setImmediate(resolve, reason);
+                            resolve(reason);
                         }
                     });
                 }
