@@ -11,8 +11,7 @@
     //todo thenable value support
 
     var global = new Function('return this')(),
-        setImmediate = (global.window || global).setImmediate,
-        globalPromise = global.Promise || Promise,
+        setImmediate = global.setImmediate,
         proto = Array.prototype,
         forEach = proto.forEach,
         every = proto.every;
@@ -207,9 +206,9 @@
     };
 
     if (typeof module != 'undefined' && module.exports) {
-        module.exports = globalPromise;
-    } else {
-        global.Promise = globalPromise;
+        module.exports = global.Promise || Promise;
+    } else if (!global.Promise) {
+        global.Promise = Promise;
     }
 
 }());
