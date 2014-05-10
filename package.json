@@ -1,6 +1,6 @@
 {
   "name": "es6-promises",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "ES6 Promise polyfill",
   "main": "promise.js",
   "dependencies": {},
@@ -25,7 +25,8 @@
     "es6",
     "browser",
     "client",
-    "server"
+    "server",
+    "async"
   ],
   "author": "Dmitry Korobkin <dmitry.korobkin@gmail.com>",
   "license": "MIT",

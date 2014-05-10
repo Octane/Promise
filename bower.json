@@ -1,7 +1,7 @@
 {
   "name": "Promise polyfill",
   "main": "promise.js",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "homepage": "https://github.com/Octane/Promise",
   "authors": [
     "Dmitry Korobkin <dmitry.korobkin@gmail.com>"
@@ -17,7 +17,8 @@
     "client",
     "browser",
     "server",
-    "nodejs"
+    "nodejs",
+    "async"
   ],
   "license": "MIT",
   "dependencies": {
