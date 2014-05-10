@@ -8,16 +8,37 @@
  */
 (function () {'use strict';
 
-    //todo thenable value support
-
     var global = new Function('return this')(),
         setImmediate = global.setImmediate,
         proto = Array.prototype,
         forEach = proto.forEach,
-        every = proto.every;
+        every = proto.every,
+        map = proto.map;
+
+    function toPromise(thenable) {
+        if (isPromise(thenable)) {
+            return thenable;
+        }
+        return new Promise(function (resolve, reject) {
+            //execute thenable.then asynchronously
+            //github.com/getify/native-promise-only/issues/5
+            //github.com/domenic/promises-unwrapping/issues/105
+            setImmediate(function () {
+                try {
+                    thenable.then(resolve, reject);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+    }
 
     function isPromise(anything) {
         return anything instanceof Promise;
+    }
+
+    function isThenable(anything) {
+        return 'then' in Object(anything);
     }
 
     function isSettled(promise) {
@@ -51,8 +72,8 @@
     }
 
     Promise.resolve = function (value) {
-        if (isPromise(value)) {
-            return value.then(defaultOnFulfilled, defaultOnRejected);
+        if (isThenable(value)) {
+            return toPromise(value);
         }
         return new Promise(function (resolve) {
             resolve(value);
@@ -68,7 +89,7 @@
     Promise.race = function (promises) {
         return new Promise(function (resolve, reject) {
             forEach.call(promises, function (promise) {
-                promise.then(resolve, reject);
+                toPromise(promise).then(resolve, reject);
             });
         });
     };
@@ -76,7 +97,8 @@
     Promise.all = function (promises) {
         return new Promise(function (resolve, reject) {
             var values = [];
-            forEach.call(promises, function (promise, index) {
+            promises = map.call(promises, toPromise);
+            promises.forEach(function (promise, index) {
                 promise.then(
                     function (value) {
                         values[index] = value;
@@ -162,8 +184,8 @@
                             reject(error);
                             return;
                         }
-                        if (isPromise(value)) {
-                            value.then(resolve, reject);
+                        if (isThenable(value)) {
+                            toPromise(value).then(resolve, reject);
                         } else {
                             resolve(value);
                         }
@@ -179,8 +201,8 @@
                             reject(error);
                             return;
                         }
-                        if (isPromise(reason)) {
-                            reason.then(resolve, reject);
+                        if (isThenable(reason)) {
+                            toPromise(reason).then(resolve, reject);
                         } else {
                             resolve(reason);
                         }

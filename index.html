@@ -46,6 +46,20 @@
                 }
             };
         }
+        if (!Array.prototype.map) {
+            Array.prototype.map = function (func, boundThis) {
+                var result = [],
+                    length = this.length,
+                    i = 0;
+                while (i < length) {
+                    if (i in this) {
+                        result[i] = func.call(boundThis, this[i], i, this);
+                    }
+                    i++;
+                }
+                return result;
+            };
+        }
         if (!Array.prototype.every) {
             Array.prototype.every = function (func, boundThis) {
                 var length = this.length,
@@ -65,7 +79,7 @@
 
     <script src="setimmediate/setimmediate.js"></script>
     <script src="promise.js"></script>
-    <script>
+    <script>'use strict';
 
         function test(desc, tester) {
             return new Promise(function (resolve, reject) {
@@ -404,6 +418,139 @@
                     assert(value == p);
                 });
             }),
+
+            test('resolve(thenable)', function (assert) {
+                var thenable = {
+                        then: function (onFulfilled) {
+                            onFulfilled(5);
+                        }
+                    };
+                Promise.resolve(thenable).then(function (value) {
+                    assert(value == 5);
+                });
+            }),
+
+            test('reject(thenable)', function (assert) {
+                var thenable = {
+                        then: function (onFulfilled, onRejected) {
+                            onRejected(5);
+                        }
+                    };
+                Promise.reject(thenable)['catch'](function (value) {
+                    assert(value == thenable);
+                });
+            }),
+
+            test('then(thenable)', function (assert) {
+                var success,
+                    thenable = {
+                        then: function (onFulfilled) {
+                            success = false;
+                            onFulfilled(5);
+                        }
+                    };
+                Promise.resolve(1).then(thenable).then(function (value) {
+                    success = value == 1; //Firefox
+                }, function () {
+                    success = true; //Chrome
+                }).then(function () {
+                    assert(success === true);
+                });
+            }),
+
+            test('catch->then', function (assert) {
+                Promise.reject()['catch'](function () {
+                    return 5;
+                }).then(function (value) {
+                    assert(value == 5);
+                });
+            }),
+
+            test('onFulfilled returns thenable', function (assert) {
+                Promise.resolve(1).then(function (value) {
+                    return {
+                        then: function (onFulfilled) {
+                            onFulfilled(value + 1)
+                        }
+                    };
+                }).then(function (value) {
+                    assert(value == 2);
+                });
+            }),
+
+            test('onRejected returns thenable', function (assert) {
+                var error = new Error('test error');
+                Promise.reject(error)['catch'](function (reason) {
+                    return {
+                        then: function (onFulfilled, onRejected) {
+                            onRejected(reason);
+                        }
+                    };
+                })['catch'](function (reason) {
+                    assert(reason == error);
+                });
+            }),
+
+            test('catch error in thenable', function (assert) {
+                Promise.resolve().then(function () {
+                    return {
+                        then: function () {
+                            throw Error('test error');
+                        }
+                    };
+                })['catch'](function (reason) {
+                    assert(true);
+                });
+            }),
+
+            test('race([thenable])', function (assert) {
+                Promise.race([{
+                    then: function (onFulfilled) {
+                        setTimeout(function () {
+                            onFulfilled(1);
+                        }, 30);
+                    }
+                }, {
+                    then: function (onFulfilled) {
+                        setTimeout(function () {
+                            onFulfilled(2);
+                        }, 30);
+                    }
+                }]).then(function (value) {
+                    assert(value == 1);
+                });
+            }),
+
+            test('all([thenable])', function (assert) {
+                Promise.all([{
+                    then: function (onFulfilled) {
+                        setTimeout(function () {
+                            onFulfilled(1);
+                        }, 30);
+                    }
+                }, {
+                    then: function (onFulfilled) {
+                        setTimeout(function () {
+                            onFulfilled(2);
+                        }, 100);
+                    }
+                }]).then(function (values) {
+                    assert(values[0] == 1);
+                });
+            }),
+
+            //github.com/getify/native-promise-only/issues/5
+            //github.com/domenic/promises-unwrapping/issues/105
+            /*test('execute thenable.then async', function (assert) {
+                var x = 0,
+                    thenable = {
+                        then: function () {
+                            x = 1;
+                        }
+                    };
+                Promise.resolve(thenable);
+                assert(x == 0);
+            }),*/
 
             //Chrome and Firefox work differently
             /*test('then(promise)', function (assert) {
