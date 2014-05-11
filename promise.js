@@ -34,7 +34,8 @@
     }
 
     function isThenable(anything) {
-        return 'function' == typeof Object(anything).then;
+        return Object(anything) === anything &&
+               'function' == typeof anything.then;
     }
 
     function isSettled(promise) {
