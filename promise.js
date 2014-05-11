@@ -9,11 +9,7 @@
 (function () {'use strict';
 
     var global = new Function('return this')(),
-        setImmediate = global.setImmediate,
-        proto = Array.prototype,
-        forEach = proto.forEach,
-        every = proto.every,
-        map = proto.map;
+        setImmediate = global.setImmediate;
 
     function toPromise(thenable) {
         if (isPromise(thenable)) {
@@ -46,7 +42,7 @@
     }
 
     function allSettled(promises) {
-        return every.call(promises, isSettled);
+        return promises.every(isSettled);
     }
 
     function defaultOnFulfilled(value) {
@@ -88,7 +84,7 @@
 
     Promise.race = function (promises) {
         return new Promise(function (resolve, reject) {
-            forEach.call(promises, function (promise) {
+            promises.forEach(function (promise) {
                 toPromise(promise).then(resolve, reject);
             });
         });
@@ -97,7 +93,7 @@
     Promise.all = function (promises) {
         return new Promise(function (resolve, reject) {
             var values = [];
-            promises = map.call(promises, toPromise);
+            promises = promises.map(toPromise);
             promises.forEach(function (promise, index) {
                 promise.then(
                     function (value) {
