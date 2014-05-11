@@ -539,6 +539,95 @@
                 });
             }),
 
+            test('race all toPromise(thenable)', function (assert) {
+                var count = 0;
+                Promise.race([
+                    {
+                        then: function (onFulfilled) {
+                            count++;
+                            setTimeout(function () {
+                                onFulfilled(1);
+                            }, 100);
+                        }
+                    },
+                    {
+                        then: function (onFulfilled) {
+                            count++;
+                            setTimeout(function () {
+                                onFulfilled(2);
+                            }, 50);
+                        }
+                    },
+                    {
+                        then: function (onFulfilled) {
+                            count++;
+                            setTimeout(function () {
+                                onFulfilled(3);
+                            }, 100);
+                        }
+                    }
+                ]).then(function (value) {
+                    assert(count == 3 && value == 2);
+                });
+            }),
+
+            test('all toPromise(thenable)', function (assert) {
+                var count = 0;
+                Promise.all([
+                    {
+                        then: function (onFulfilled) {
+                            count++;
+                            setTimeout(function () {
+                                onFulfilled(1);
+                            }, 20);
+                        }
+                    },
+                    {
+                        then: function (onFulfilled) {
+                            count++;
+                            setTimeout(function () {
+                                onFulfilled(2);
+                            }, 30);
+                        }
+                    },
+                    {
+                        then: function (onFulfilled) {
+                            count++;
+                            setTimeout(function () {
+                                onFulfilled(3);
+                            }, 40);
+                        }
+                    }
+                ]).then(function (values) {
+                    assert(count == 3 && values[2] == 3);
+                });
+            }),
+
+            test('first rejected', function (assert) {
+                var reason1 = new Error,
+                    reason2 = new Error,
+                    reason3 = new Error;
+                Promise.race([
+                    new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            reject(reason1);
+                        }, 150);
+                    }),
+                    new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            reject(reason2);
+                        }, 100);
+                    }),
+                    new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            reject(reason3);
+                        }, 50);
+                    }),
+                ])['catch'](function (reason) {
+                    assert(reason == reason3);
+                });
+            }),
+
             //github.com/getify/native-promise-only/issues/5
             //github.com/domenic/promises-unwrapping/issues/105
             /*test('execute thenable.then async', function (assert) {
