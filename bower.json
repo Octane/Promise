@@ -1,7 +1,7 @@
 {
   "name": "Promise polyfill",
   "main": "promise.js",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "homepage": "https://github.com/Octane/Promise",
   "authors": [
     "Dmitry Korobkin <dmitry.korobkin@gmail.com>"
@@ -22,15 +22,11 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "setImmediate": "~1.0.0"
+    "setImmediate": "*"
   },
   "ignore": [
-    ".gitignore",
-    ".gitmodules",
-    "bower.json",
-    "package.json",
-    "index.html",
-    "LICENSE",
-    "setimmediate"
+    "*",
+    "!README.md",
+    "!promise.js"
   ]
 }
