@@ -88,6 +88,8 @@
     };
 
     Promise.all = function (promises) {
+        if(!(promises instanceof Array) || promises.length === 0)
+            return Promise.resolve([]);
         return new Promise(function (resolve, reject) {
             var values = [];
             promises = promises.map(toPromise);
