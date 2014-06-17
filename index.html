@@ -595,7 +595,7 @@
                         setTimeout(function () {
                             reject(reason3);
                         }, 50);
-                    }),
+                    })
                 ])['catch'](function (reason) {
                     assert(reason == reason3);
                 });
@@ -638,7 +638,9 @@
                             resolve(value + 1);
                         }).then(function (value) {
                             return new Promise(function (resolve) {
-                                resolve(value + 1);
+                                setTimeout(function () {
+                                    resolve(value + 1);
+                                }, 50);
                             }).then(function (value) {
                                 return value + 1;
                             });
@@ -683,7 +685,9 @@
                         reject(error);
                     })['catch'](function (reason) {
                         return new Promise(function (resolve, reject) {
-                            reject(reason);
+                            setTimeout(function () {
+                                reject(reason);
+                            }, 50);
                         })['catch'](function (reason) {
                             return new Promise(function (resolve, reject) {
                                 reject(reason);
@@ -697,6 +701,50 @@
                     assert(reason === error);
                 });
             }),
+
+            test('fulfill race(mixed)', function (assert) {
+                Promise.race([
+                    new Promise(function (resolve) {
+                        setTimeout(function () {
+                            resolve(1);
+                        }, 50);
+                    }),
+                    2,
+                    new Promise(function (resolve) {
+                        setTimeout(function () {
+                            resolve(3);
+                        }, 100);
+                    })
+                ]).then(function (value) {
+                    assert(value == 2);
+                });
+            }),
+
+            test('deep fulfill race(mixed)', function (assert) {
+                Promise.race([
+                    new Promise(function (resolve) {
+                        setTimeout(function () {
+                            resolve(1);
+                        }, 100);
+                    }).then(function (value) {
+                        return new Promise(function (resolve) {
+                            resolve(value);
+                        });
+                    }),
+                    new Promise(function (resolve) {
+                        setTimeout(function () {
+                            resolve(2);
+                        }, 50);
+                    }).then(function (value) {
+                        return new Promise(function (resolve) {
+                            resolve(value);
+                        });
+                    })
+                ]).then(function (value) {
+                    assert(value == 2);
+                });
+            }),
+
 
             //github.com/getify/native-promise-only/issues/5
             //github.com/domenic/promises-unwrapping/issues/105

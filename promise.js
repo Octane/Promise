@@ -93,11 +93,20 @@
         });
     };
 
-    Promise.race = function (promises) {
+    Promise.race = function (values) {
         return new Promise(function (resolve, reject) {
-            promises.forEach(function (promise) {
-                toPromise(promise).then(resolve, reject);
-            });
+            var value,
+                length = values.length,
+                i = 0;
+            while (i < length) {
+                value = values[i];
+                if (isThenable(value)) {
+                    dive(value, resolve, reject);
+                } else {
+                    resolve(value);
+                }
+                i++;
+            }
         });
     };
 
