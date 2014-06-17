@@ -46,33 +46,6 @@
                 }
             };
         }
-        if (!Array.prototype.map) {
-            Array.prototype.map = function (func, boundThis) {
-                var result = [],
-                    length = this.length,
-                    i = 0;
-                while (i < length) {
-                    if (i in this) {
-                        result[i] = func.call(boundThis, this[i], i, this);
-                    }
-                    i++;
-                }
-                return result;
-            };
-        }
-        if (!Array.prototype.every) {
-            Array.prototype.every = function (func, boundThis) {
-                var length = this.length,
-                    i = 0;
-                while (i < length) {
-                    if (i in this && !func.call(boundThis, this[i], i, this)) {
-                        return false;
-                    }
-                    i++;
-                }
-                return true;
-            };
-        }
     </script>
     <script src="setimmediate/setimmediate-ie8.js"></script>
     <![endif]-->
@@ -625,6 +598,103 @@
                     }),
                 ])['catch'](function (reason) {
                     assert(reason == reason3);
+                });
+            }),
+
+            test('fulfill all(emptyArray)', function (assert) {
+                Promise.all([]).then(function () {
+                    assert(true);
+                });
+            }),
+
+            test('fulfill all(values)', function (assert) {
+                var array = [1, 2, , 3];
+                Promise.all(array).then(function (values) {
+                    var count = 0;
+                    values.forEach(function (value, index) {
+                        if (array[index] != values[index]) {
+                            assert(false);
+                        }
+                        count++;
+                    });
+                    assert(count == 4);
+                });
+            }),
+
+            test('fulfill all(mixed)', function (assert) {
+                Promise.all([
+                    Promise.resolve(1)
+                ]).then(function (values) {
+                    assert(1 == values[0]);
+                });
+            }),
+
+            test('deep fulfill all(mixed)', function (assert) {
+                Promise.all([
+                    new Promise(function (resolve) {
+                        resolve(1);
+                    }).then(function (value) {
+                        return new Promise(function (resolve) {
+                            resolve(value + 1);
+                        }).then(function (value) {
+                            return new Promise(function (resolve) {
+                                resolve(value + 1);
+                            }).then(function (value) {
+                                return value + 1;
+                            });
+                        });
+                    }),
+                    /*undefined*/,
+                    2,
+                    Promise.resolve(1),
+                    0
+                ]).then(function (values) {
+                    assert(
+                        5 == values.length &&
+                        0 == values[4] &&
+                        1 == values[3] &&
+                        2 == values[2] &&
+                        undefined == values[1] &&
+                        4 == values[0]
+                    );
+                });
+            }),
+
+            test('reject all(mixed)', function (assert) {
+                var error = new Error;
+                Promise.all([
+                    1,
+                    new Promise(function (resolve, reject) {
+                        reject(error);
+                    }),
+                    3
+                ]).then(function (values) {
+                    assert(false);
+                }, function (reason) {
+                    assert(reason === error);
+                });
+            }),
+
+            test('deep reject all(mixed)', function (assert) {
+                var error = new Error;
+                Promise.all([
+                    1,
+                    new Promise(function (resolve, reject) {
+                        reject(error);
+                    })['catch'](function (reason) {
+                        return new Promise(function (resolve, reject) {
+                            reject(reason);
+                        })['catch'](function (reason) {
+                            return new Promise(function (resolve, reject) {
+                                reject(reason);
+                            });
+                        });
+                    }),
+                    3
+                ]).then(function (values) {
+                    assert(false);
+                }, function (reason) {
+                    assert(reason === error);
                 });
             }),
 
