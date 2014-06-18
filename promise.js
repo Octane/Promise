@@ -1,5 +1,5 @@
 /**
- * Promise polyfill v1.0.6
+ * Promise polyfill v1.0.7
  * requires setImmediate
  *
  * © 2014 Dmitry Korobkin
@@ -117,6 +117,7 @@
                 value,
                 length = values.length,
                 i = 0;
+            values = values.slice(0);
             while (i < length) {
                 value = values[i];
                 if (isThenable(value)) {

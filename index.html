@@ -745,6 +745,13 @@
                 });
             }),
 
+            test('do not modify initial array', function (assert) {
+                var array = [1, , 3];
+                Promise.all(array).then(function (values) {
+                    assert(1 in values && !(1 in array));
+                });
+
+            }),
 
             //github.com/getify/native-promise-only/issues/5
             //github.com/domenic/promises-unwrapping/issues/105
