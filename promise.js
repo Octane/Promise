@@ -1,5 +1,5 @@
 /**
- * Promise polyfill v1.0.7
+ * Promise polyfill v1.0.8
  * requires setImmediate
  *
  * © 2014 Dmitry Korobkin
@@ -25,24 +25,27 @@
         });
     }
 
+    function isCallable(anything) {
+        return 'function' == typeof anything;
+    }
+
     function isPromise(anything) {
         return anything instanceof Promise;
     }
 
     function isThenable(anything) {
-        return Object(anything) === anything &&
-               'function' == typeof anything.then;
+        return Object(anything) === anything && isCallable(anything.then);
     }
 
     function isSettled(promise) {
         return promise._fulfilled || promise._rejected;
     }
 
-    function defaultOnFulfilled(value) {
+    function identity(value) {
         return value;
     }
 
-    function defaultOnRejected(reason) {
+    function thrower(reason) {
         throw reason;
     }
 
@@ -205,10 +208,10 @@
 
             var promise = this;
 
-            return new Promise(function (resolve, reject) {
+            onFulfilled = isCallable(onFulfilled) ? onFulfilled : identity;
+            onRejected = isCallable(onRejected) ? onRejected : thrower;
 
-                onFulfilled = onFulfilled || defaultOnFulfilled;
-                onRejected = onRejected || defaultOnRejected;
+            return new Promise(function (resolve, reject) {
 
                 function asyncOnFulfilled() {
                     setImmediate(function () {
