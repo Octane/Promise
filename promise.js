@@ -177,11 +177,23 @@
         },
 
         _fulfill: function (value) {
-            if (!isSettled(this)) {
-                this._fulfilled = true;
-                this._value = value;
-                this._onFulfilled.forEach(call);
-                this._clearQueue();
+            var promise = this;
+            if (!isSettled(promise)) {
+                if (isThenable(value)) {
+                    toPromise(value).then(
+                        function (value) {
+                            promise._fulfill(value);
+                        },
+                        function (reason) {
+                            promise._reject(reason);
+                        }
+                    );
+                } else {
+                    promise._fulfilled = true;
+                    promise._value = value;
+                    promise._onFulfilled.forEach(call);
+                    promise._clearQueue();
+                }
             }
         },
 

@@ -792,5 +792,16 @@
 
     </script>
 
+    <script>
+        //todo fix this test case
+        var promise = Promise.resolve().then(function () {
+            return promise;
+        });
+
+        promise['catch'](function (reason) {
+            console.log(reason instanceof TypeError);
+        });
+    </script>
+
 </body>
 </html>
