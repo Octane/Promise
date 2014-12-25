@@ -8,7 +8,8 @@
  */
 (function (global) {'use strict';
 
-    var setImmediate = global.setImmediate || require('timers').setImmediate;
+    var setImmediate = global.setImmediate || require('timers').setImmediate,
+        CHAINING_CYCLE = 'then() cannot return same Promise that it resolves.';
 
     function toPromise(thenable) {
         if (isPromise(thenable)) {
@@ -180,6 +181,7 @@
             var promise = this;
             if (!isSettled(promise)) {
                 if (isThenable(value)) {
+                    //todo dive?
                     toPromise(value).then(
                         function (value) {
                             promise._fulfill(value);
@@ -218,18 +220,22 @@
 
         then: function (onFulfilled, onRejected) {
 
-            var promise = this;
+            var promise = this,
+                nextPromise;
 
             onFulfilled = isCallable(onFulfilled) ? onFulfilled : identity;
             onRejected = isCallable(onRejected) ? onRejected : thrower;
 
-            return new Promise(function (resolve, reject) {
+            nextPromise = new Promise(function (resolve, reject) {
 
                 function asyncOnFulfilled() {
                     setImmediate(function () {
                         var value;
                         try {
                             value = onFulfilled(promise._value);
+                            if (nextPromise === value) {
+                                throw new TypeError(CHAINING_CYCLE);
+                            }
                         } catch (error) {
                             reject(error);
                             return;
@@ -247,6 +253,9 @@
                         var reason;
                         try {
                             reason = onRejected(promise._reason);
+                            if (nextPromise === reason) {
+                                throw new TypeError(CHAINING_CYCLE);
+                            }
                         } catch (error) {
                             reject(error);
                             return;
@@ -268,6 +277,8 @@
                 }
 
             });
+
+            return nextPromise;
 
         },
 

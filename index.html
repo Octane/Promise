@@ -17,7 +17,7 @@
 
     <script>
         try {
-            console.log;
+            console.clear();
         }
         catch (error) {
             window.console = {
@@ -750,7 +750,28 @@
                 Promise.all(array).then(function (values) {
                     assert(1 in values && !(1 in array));
                 });
+            }),
 
+            test('chaining cycle on resolve', function (assert) {
+                var promise = Promise.resolve().then(function () {
+                    return promise;
+                });
+                promise.then(function () {
+                    assert(false);
+                }, function (reason) {
+                    assert(reason instanceof TypeError);
+                });
+            }),
+
+            test('chaining cycle on reject', function (assert) {
+                var promise = Promise.reject()['catch'](function () {
+                    return promise;
+                });
+                promise.then(function () {
+                    assert(false);
+                }, function (reason) {
+                    assert(reason instanceof TypeError);
+                });
             }),
 
             //github.com/getify/native-promise-only/issues/5
@@ -790,17 +811,6 @@
             console.log(reason.toString());
         });
 
-    </script>
-
-    <script>
-        //todo fix this test case
-        var promise = Promise.resolve().then(function () {
-            return promise;
-        });
-
-        promise['catch'](function (reason) {
-            console.log(reason instanceof TypeError);
-        });
     </script>
 
 </body>
