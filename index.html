@@ -16,8 +16,12 @@
     </h1>
 
     <script>
+        if (!/firefox/i.test(navigator.userAgent)) {
+            console.log('polyfill');
+            Promise = null;
+        }
         try {
-            console.clear();
+            //console.clear();
         }
         catch (error) {
             window.console = {
@@ -52,6 +56,7 @@
 
     <script src="setimmediate/setimmediate.js"></script>
     <script src="promise.js"></script>
+<!--
     <script>'use strict';
 
         function test(desc, tester) {
@@ -811,6 +816,21 @@
             console.log(reason.toString());
         });
 
+    </script>
+-->
+    <script>
+        var thenable = Object.create(null, {
+            then: {
+                get: function () {
+                    throw new Error('O_o');
+                }
+            }
+        });
+        Promise.resolve(thenable).then(function (value) {
+            console.log('value → ' + value);
+        }, function (reason) {
+            console.log('reason → ' + reason);
+        });
     </script>
 
 </body>

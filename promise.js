@@ -11,19 +11,34 @@
     var setImmediate = global.setImmediate || require('timers').setImmediate,
         CHAINING_CYCLE = 'then() cannot return same Promise that it resolves.';
 
-    function toPromise(thenable) {
-        if (isPromise(thenable)) {
-            return thenable;
+    function InternalError(originalError) {
+        this.originalError = originalError;
+    }
+
+    function toPromise(anything) {
+        var then;
+        if (isPromise(anything)) {
+            return anything;
         }
-        return new Promise(function (resolve, reject) {
-            setImmediate(function () {
-                try {
-                    thenable.then(resolve, reject);
-                } catch (error) {
-                    reject(error);
-                }
-            });
-        });
+        if(Object(anything) === anything) {
+            try {
+                then = anything.then;
+            } catch (error) {
+                return new InternalError(error);
+            }
+            if (isCallable(then)) {
+                return new Promise(function (resolve, reject) {
+                    setImmediate(function () {
+                        try {
+                            then.call(anything, resolve, reject);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    });
+                });
+            }
+        }
+        return null;
     }
 
     function isCallable(anything) {
@@ -34,8 +49,8 @@
         return anything instanceof Promise;
     }
 
-    function isThenable(anything) {
-        return Object(anything) === anything && isCallable(anything.then);
+    function isInternalError(anything) {
+        return anything instanceof InternalError;
     }
 
     function isSettled(promise) {
@@ -54,22 +69,28 @@
         callback();
     }
 
-    function dive(thenable, onFulfilled, onRejected) {
+    function dive(promise, onFulfilled, onRejected) {
         function interimOnFulfilled(value) {
-            if (isThenable(value)) {
-                toPromise(value).then(interimOnFulfilled, interimOnRejected);
+            var anything = toPromise(value);
+            if (isPromise(anything)) {
+                anything.then(interimOnFulfilled, interimOnRejected);
+            } else if (isInternalError(anything)) {
+                onRejected(anything.originalError);
             } else {
                 onFulfilled(value);
             }
         }
         function interimOnRejected(reason) {
-            if (isThenable(reason)) {
-                toPromise(reason).then(interimOnFulfilled, interimOnRejected);
+            var anything = toPromise(reason);
+            if (isPromise(anything)) {
+                anything.then(interimOnFulfilled, interimOnRejected);
+            } else if (isInternalError(anything)) {
+                onRejected(anything.originalError);
             } else {
                 onRejected(reason);
             }
         }
-        toPromise(thenable).then(interimOnFulfilled, interimOnRejected);
+        promise.then(interimOnFulfilled, interimOnRejected);
     }
 
     function Promise(resolver) {
@@ -83,8 +104,14 @@
     }
 
     Promise.resolve = function (value) {
-        if (isThenable(value)) {
-            return toPromise(value);
+        var anything = toPromise(value);
+        if (isPromise(anything)) {
+            return anything;
+        }
+        if (isInternalError(anything)) {
+            return new Promise(function (resolve, reject) {
+                reject(anything.originalError);
+            });
         }
         return new Promise(function (resolve) {
             resolve(value);
@@ -99,13 +126,17 @@
 
     Promise.race = function (values) {
         return new Promise(function (resolve, reject) {
-            var value,
+            var anything,
+                value,
                 length = values.length,
                 i = 0;
             while (i < length) {
                 value = values[i];
-                if (isThenable(value)) {
-                    dive(value, resolve, reject);
+                anything = toPromise(value);
+                if (isPromise(anything)) {
+                    dive(anything, resolve, reject);
+                } else if (isInternalError(anything)) {
+                    reject(anything.originalError);
                 } else {
                     resolve(value);
                 }
@@ -118,16 +149,18 @@
         return new Promise(function (resolve, reject) {
             var thenables = 0,
                 fulfilled = 0,
+                anything,
                 value,
                 length = values.length,
                 i = 0;
             values = values.slice(0);
             while (i < length) {
                 value = values[i];
-                if (isThenable(value)) {
+                anything = toPromise(value);
+                if (isPromise(anything)) {
                     thenables++;
                     dive(
-                        value,
+                        anything,
                         function (index) {
                             return function (value) {
                                 values[index] = value;
@@ -139,6 +172,8 @@
                         }(i),
                         reject
                     );
+                } else if (isInternalError(anything)) {
+                    reject(anything.originalError);
                 } else {
                     //[1, , 3] → [1, undefined, 3]
                     values[i] = value;
@@ -178,11 +213,12 @@
         },
 
         _fulfill: function (value) {
-            var promise = this;
+            var promise = this,
+                anything;
             if (!isSettled(promise)) {
-                if (isThenable(value)) {
-                    //todo dive?
-                    toPromise(value).then(
+                anything = toPromise(value);
+                if (isPromise(anything)) {
+                    anything.then(
                         function (value) {
                             promise._fulfill(value);
                         },
@@ -190,6 +226,8 @@
                             promise._reject(reason);
                         }
                     );
+                } else if (isInternalError(anything)) {
+                    promise._reject(anything.originalError);
                 } else {
                     promise._fulfilled = true;
                     promise._value = value;
@@ -230,7 +268,8 @@
 
                 function asyncOnFulfilled() {
                     setImmediate(function () {
-                        var value;
+                        var anything,
+                            value;
                         try {
                             value = onFulfilled(promise._value);
                             if (nextPromise === value) {
@@ -240,8 +279,11 @@
                             reject(error);
                             return;
                         }
-                        if (isThenable(value)) {
-                            toPromise(value).then(resolve, reject);
+                        anything = toPromise(value);
+                        if (isPromise(anything)) {
+                            anything.then(resolve, reject);
+                        } else if (isInternalError(anything)) {
+                            reject(anything.originalError);
                         } else {
                             resolve(value);
                         }
@@ -250,7 +292,8 @@
 
                 function asyncOnRejected() {
                     setImmediate(function () {
-                        var reason;
+                        var anything,
+                            reason;
                         try {
                             reason = onRejected(promise._reason);
                             if (nextPromise === reason) {
@@ -260,8 +303,11 @@
                             reject(error);
                             return;
                         }
-                        if (isThenable(reason)) {
-                            toPromise(reason).then(resolve, reject);
+                        anything = toPromise(reason);
+                        if (isPromise(anything)) {
+                            anything.then(resolve, reject);
+                        } else if (isInternalError(anything)) {
+                            reject(anything.originalError);
                         } else {
                             resolve(reason);
                         }
