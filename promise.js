@@ -1,5 +1,5 @@
 /**
- * Promise polyfill v1.0.8
+ * Promise polyfill v1.0.9
  * requires setImmediate
  *
  * © 2014 Dmitry Korobkin
@@ -28,6 +28,7 @@
             }
             if (isCallable(then)) {
                 return new Promise(function (resolve, reject) {
+                    /*
                     setImmediate(function () {
                         try {
                             then.call(anything, resolve, reject);
@@ -35,6 +36,8 @@
                             reject(error);
                         }
                     });
+                    */
+                    then.call(anything, resolve, reject);
                 });
             }
         }
@@ -226,6 +229,15 @@
                             promise._reject(reason);
                         }
                     );
+                    /*dive(
+                        anything,
+                        function (value) {
+                            promise._fulfill(value);
+                        },
+                        function (reason) {
+                            promise._reject(reason);
+                        }
+                    );*/
                 } else if (isInternalError(anything)) {
                     promise._reject(anything.originalError);
                 } else {

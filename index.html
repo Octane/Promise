@@ -16,12 +16,8 @@
     </h1>
 
     <script>
-        if (!/firefox/i.test(navigator.userAgent)) {
-            console.log('polyfill');
-            Promise = null;
-        }
         try {
-            //console.clear();
+            console.clear();
         }
         catch (error) {
             window.console = {
@@ -55,6 +51,12 @@
     <![endif]-->
 
     <script src="setimmediate/setimmediate.js"></script>
+    <script>
+        if (window.location.search.indexOf('native') == -1) {
+            console.log('to use native Promise, add query parameter "native"');
+            Promise = null;
+        }
+    </script>
     <script src="promise.js"></script>
 <!--
     <script>'use strict';
@@ -819,18 +821,33 @@
     </script>
 -->
     <script>
-        var thenable = Object.create(null, {
-            then: {
-                get: function () {
-                    throw new Error('O_o');
-                }
+        var x = {
+            then: function (resolvePromise) {
+                console.log('call x.then');
+                resolvePromise(y);
             }
+        };
+        var y = {
+            then: function (resolvePromise) {
+                console.log('call y.then');
+                resolvePromise('y1');
+                resolvePromise('y2');
+            }
+        };
+        var promise = new Promise(function (resolve) {
+            console.log('call resolver');
+            resolve(x);
         });
-        Promise.resolve(thenable).then(function (value) {
-            console.log('value → ' + value);
-        }, function (reason) {
-            console.log('reason → ' + reason);
+        console.log('call promise.then synchronously');
+        promise.then(function (value) {
+            console.log('call onFulfilled from synchronously called then, value = ' + value);
         });
+        window.setTimeout(function () {
+            console.log('call promise.then asynchronously');
+            promise.then(function (value) {
+                console.log('call onFulfilled from asynchronously called then, value = ' + value);
+            });
+        }, 100);
     </script>
 
 </body>
