@@ -1,3 +1,5 @@
+<p align="right"><a href="https://github.com/promises-aplus/promises-tests"><img src="https://promisesaplus.com/assets/logo-small.png" alt="Promises/A+ logo" title="Promises/A+ compliant" valign="middle" width="41"> Promises/A+compliant</a></p>
+
 #ES6 Promise polyfill
 
 To use the Promise polyfill, just drop two JavaScript files into your page:
