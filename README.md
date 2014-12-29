@@ -28,7 +28,7 @@ bower install promises
 
 ##Tests
 
-<a href="http://promises-aplus.github.com/promises-spec"><img src="http://promises-aplus.github.com/promises-spec/assets/logo-small.png" alt="Promises/A+ logo" width="41" valign="middle"> Promises/A+ compliant</a>
+<a href="https://github.com/promises-aplus/promises-tests"><img src="http://promises-aplus.github.com/promises-spec/assets/logo-small.png" alt="Promises/A+ logo" width="41" valign="middle"> Promises/A+ compliant</a>
 ```
 npm test
 ```
