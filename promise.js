@@ -210,7 +210,7 @@
             try {
                 resolver(resolve, reject);
             } catch(error) {
-                if (!isSettled(promise) && !promise._pending) {
+                if (!isSettled(promise)) {
                     reject(error);
                 }
             }
@@ -223,7 +223,6 @@
             if (!isSettled(promise) && !promise._pending) {
                 anything = toPromise(value, true);
                 if (isPromise(anything)) {
-                    //todo dive?
                     promise._pending = true;
                     anything.then(
                         function (value) {

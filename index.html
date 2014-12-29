@@ -832,6 +832,7 @@
         var promise = new Promise(function (resolve, reject) {
             deferred.resolve = resolve;
             deferred.reject = reject;
+            throw new Error('O_o');
             resolve(thenable);
         });
         deferred.resolve('other test value');
@@ -850,6 +851,18 @@
             };
         Promise.resolve(thenable);
         console.log('x = ' + x, x === 0);
+
+        new Promise(function (resolve) {
+            resolve(new Promise(function (resolve) {
+                resolve(new Promise(function (resolve) {
+                    resolve(new Promise(function (resolve) {
+                        resolve('Hell yeah!');
+                    }));
+                }));
+            }));
+        }).then(function (value) {
+            console.log(value);
+        });
     </script>
 
 </body>
