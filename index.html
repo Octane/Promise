@@ -58,7 +58,6 @@
         }
     </script>
     <script src="promise.js"></script>
-<!--
     <script>'use strict';
 
         function test(desc, tester) {
@@ -819,35 +818,38 @@
         });
 
     </script>
--->
+
     <script>
-        var x = {
-            then: function (resolvePromise) {
-                console.log('call x.then');
-                resolvePromise(y);
+        var testValue = 'test value';
+        var testReason = new Error('test error');
+        var thenable = {
+            then: function (resolvePromise, rejectPromise) {
+                resolvePromise(testValue);
+                reject(testReason);
             }
         };
-        var y = {
-            then: function (resolvePromise) {
-                console.log('call y.then');
-                resolvePromise('y1');
-                resolvePromise('y2');
-            }
-        };
-        var promise = new Promise(function (resolve) {
-            console.log('call resolver');
-            resolve(x);
+        var deferred = {};
+        var promise = new Promise(function (resolve, reject) {
+            deferred.resolve = resolve;
+            deferred.reject = reject;
+            resolve(thenable);
         });
-        console.log('call promise.then synchronously');
+        deferred.resolve('other test value');
+        deferred.reject(new Error('other test error'));
         promise.then(function (value) {
-            console.log('call onFulfilled from synchronously called then, value = ' + value);
+            console.log('value = "' + value + '"', value === testValue);
+        }, function (reason) {
+            console.log('reason = "' + reason + '"', reason === testReason);
         });
-        window.setTimeout(function () {
-            console.log('call promise.then asynchronously');
-            promise.then(function (value) {
-                console.log('call onFulfilled from asynchronously called then, value = ' + value);
-            });
-        }, 100);
+
+        var x = 0,
+            thenable = {
+                then: function () {
+                    x = 1;
+                }
+            };
+        Promise.resolve(thenable);
+        console.log('x = ' + x, x === 0);
     </script>
 
 </body>

@@ -15,7 +15,7 @@
         this.originalError = originalError;
     }
 
-    function toPromise(anything) {
+    function toPromise(anything, synchronous) {
         var then;
         if (isPromise(anything)) {
             return anything;
@@ -28,16 +28,17 @@
             }
             if (isCallable(then)) {
                 return new Promise(function (resolve, reject) {
-                    /*
-                    setImmediate(function () {
-                        try {
-                            then.call(anything, resolve, reject);
-                        } catch (error) {
-                            reject(error);
-                        }
-                    });
-                    */
-                    then.call(anything, resolve, reject);
+                    if (synchronous) {
+                        then.call(anything, resolve, reject);
+                    } else {
+                        setImmediate(function () {
+                            try {
+                                then.call(anything, resolve, reject);
+                            } catch (error) {
+                                reject(error);
+                            }
+                        });
+                    }
                 });
             }
         }
@@ -97,6 +98,7 @@
     }
 
     function Promise(resolver) {
+        this._pending = false;
         this._fulfilled = false;
         this._rejected = false;
         this._value = undefined;
@@ -208,7 +210,7 @@
             try {
                 resolver(resolve, reject);
             } catch(error) {
-                if (!isSettled(promise)) {
+                if (!isSettled(promise) && !promise._pending) {
                     reject(error);
                 }
             }
@@ -218,26 +220,21 @@
         _fulfill: function (value) {
             var promise = this,
                 anything;
-            if (!isSettled(promise)) {
-                anything = toPromise(value);
+            if (!isSettled(promise) && !promise._pending) {
+                anything = toPromise(value, true);
                 if (isPromise(anything)) {
+                    //todo dive?
+                    promise._pending = true;
                     anything.then(
                         function (value) {
+                            promise._pending = false;
                             promise._fulfill(value);
                         },
                         function (reason) {
+                            promise._pending = false;
                             promise._reject(reason);
                         }
                     );
-                    /*dive(
-                        anything,
-                        function (value) {
-                            promise._fulfill(value);
-                        },
-                        function (reason) {
-                            promise._reject(reason);
-                        }
-                    );*/
                 } else if (isInternalError(anything)) {
                     promise._reject(anything.originalError);
                 } else {
@@ -250,7 +247,7 @@
         },
 
         _reject: function (reason) {
-            if (!isSettled(this)) {
+            if (!isSettled(this) && !this._pending) {
                 this._rejected = true;
                 this._reason = reason;
                 this._onRejected.forEach(call);
