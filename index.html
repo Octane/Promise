@@ -71,7 +71,7 @@
                         reject(new Error(desc));
                     }
                 });
-                setTimeout(function () {
+                window.setTimeout(function () {
                     if (!settled) {
                         reject(new Error(desc));
                     }
@@ -206,7 +206,7 @@
                         });
                         return val;
                     });
-                setTimeout(function () {
+                window.setTimeout(function () {
                     assert(success);
                 }, 100);
             }),
@@ -222,7 +222,7 @@
                 }).then(function () {
                     success = true;
                 });
-                setTimeout(function () {
+                window.setTimeout(function () {
                     assert(success);
                 }, 100);
             }),
@@ -238,7 +238,7 @@
                 }).then(function () {
                     success = true;
                 });
-                setTimeout(function () {
+                window.setTimeout(function () {
                     assert(success);
                 }, 200);
             }),
@@ -252,7 +252,7 @@
                 }).then(function (value) {
                     success = value == 2;
                 });
-                setTimeout(function () {
+                window.setTimeout(function () {
                     assert(success);
                 }, 100);
             }),
@@ -266,7 +266,7 @@
                 })['catch'](function (reason) {
                     success = reason == 1;
                 });
-                setTimeout(function () {
+                window.setTimeout(function () {
                     assert(success);
                 }, 100);
             }),
@@ -279,7 +279,7 @@
                 }).then(function () {
                     success = true;
                 });
-                setTimeout(function () {
+                window.setTimeout(function () {
                     assert(success);
                 }, 100);
             }),
@@ -330,7 +330,7 @@
 
             test('await resolve', function (assert) {
                 new Promise(function (resolve) {
-                    setTimeout(resolve, 100);
+                    window.setTimeout(resolve, 100);
                 }).then(function () {
                     assert(true);
                 });
@@ -338,7 +338,7 @@
 
             test('await reject', function (assert) {
                 new Promise(function (resolve, reject) {
-                    setTimeout(reject, 100);
+                    window.setTimeout(reject, 100);
                 })['catch'](function () {
                     assert(true);
                 });
@@ -362,17 +362,17 @@
 
             test('race', function (assert) {
                 var p1 = new Promise(function (resolve) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             resolve(1);
                         }, 150);
                     }),
                     p2 = new Promise(function (resolve) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             resolve(2);
                         }, 50);
                     }),
                     p3 = new Promise(function (resolve) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             resolve(3);
                         }, 100);
                     });
@@ -485,13 +485,13 @@
             test('race([thenable])', function (assert) {
                 Promise.race([{
                     then: function (onFulfilled) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             onFulfilled(1);
                         }, 30);
                     }
                 }, {
                     then: function (onFulfilled) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             onFulfilled(2);
                         }, 30);
                     }
@@ -503,13 +503,13 @@
             test('all([thenable])', function (assert) {
                 Promise.all([{
                     then: function (onFulfilled) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             onFulfilled(1);
                         }, 30);
                     }
                 }, {
                     then: function (onFulfilled) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             onFulfilled(2);
                         }, 100);
                     }
@@ -524,7 +524,7 @@
                     {
                         then: function (onFulfilled) {
                             count++;
-                            setTimeout(function () {
+                            window.setTimeout(function () {
                                 onFulfilled(1);
                             }, 100);
                         }
@@ -532,7 +532,7 @@
                     {
                         then: function (onFulfilled) {
                             count++;
-                            setTimeout(function () {
+                            window.setTimeout(function () {
                                 onFulfilled(2);
                             }, 50);
                         }
@@ -540,7 +540,7 @@
                     {
                         then: function (onFulfilled) {
                             count++;
-                            setTimeout(function () {
+                            window.setTimeout(function () {
                                 onFulfilled(3);
                             }, 100);
                         }
@@ -556,7 +556,7 @@
                     {
                         then: function (onFulfilled) {
                             count++;
-                            setTimeout(function () {
+                            window.setTimeout(function () {
                                 onFulfilled(1);
                             }, 20);
                         }
@@ -564,7 +564,7 @@
                     {
                         then: function (onFulfilled) {
                             count++;
-                            setTimeout(function () {
+                            window.setTimeout(function () {
                                 onFulfilled(2);
                             }, 30);
                         }
@@ -572,7 +572,7 @@
                     {
                         then: function (onFulfilled) {
                             count++;
-                            setTimeout(function () {
+                            window.setTimeout(function () {
                                 onFulfilled(3);
                             }, 40);
                         }
@@ -588,17 +588,17 @@
                     reason3 = new Error;
                 Promise.race([
                     new Promise(function (resolve, reject) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             reject(reason1);
                         }, 150);
                     }),
                     new Promise(function (resolve, reject) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             reject(reason2);
                         }, 100);
                     }),
                     new Promise(function (resolve, reject) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             reject(reason3);
                         }, 50);
                     })
@@ -644,7 +644,7 @@
                             resolve(value + 1);
                         }).then(function (value) {
                             return new Promise(function (resolve) {
-                                setTimeout(function () {
+                                window.setTimeout(function () {
                                     resolve(value + 1);
                                 }, 50);
                             }).then(function (value) {
@@ -691,7 +691,7 @@
                         reject(error);
                     })['catch'](function (reason) {
                         return new Promise(function (resolve, reject) {
-                            setTimeout(function () {
+                            window.setTimeout(function () {
                                 reject(reason);
                             }, 50);
                         })['catch'](function (reason) {
@@ -711,13 +711,13 @@
             test('fulfill race(mixed)', function (assert) {
                 Promise.race([
                     new Promise(function (resolve) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             resolve(1);
                         }, 50);
                     }),
                     2,
                     new Promise(function (resolve) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             resolve(3);
                         }, 100);
                     })
@@ -729,7 +729,7 @@
             test('deep fulfill race(mixed)', function (assert) {
                 Promise.race([
                     new Promise(function (resolve) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             resolve(1);
                         }, 100);
                     }).then(function (value) {
@@ -738,7 +738,7 @@
                         });
                     }),
                     new Promise(function (resolve) {
-                        setTimeout(function () {
+                        window.setTimeout(function () {
                             resolve(2);
                         }, 50);
                     }).then(function (value) {

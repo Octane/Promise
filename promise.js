@@ -250,66 +250,68 @@
     Promise.race = function (values) {
         return new Promise(function (resolve, reject) {
             var anything;
+            var length;
             var value;
-            var length = values.length;
-            var i = 0;
-            if (!isArray(values)) {
-                throw new TypeError(NOT_ARRAY);
-            }
-            while (i < length) {
-                value = values[i];
-                anything = toPromise(value);
-                if (isPromise(anything)) {
-                    anything.then(resolve, reject);
-                } else if (isInternalError(anything)) {
-                    reject(anything[ORIGINAL_ERROR]);
-                } else {
-                    resolve(value);
+            var i;
+            if (isArray(values)) {
+                length = values.length;
+                for (i = 0; i < length; i++) {
+                    value = values[i];
+                    anything = toPromise(value);
+                    if (isPromise(anything)) {
+                        anything.then(resolve, reject);
+                    } else if (isInternalError(anything)) {
+                        reject(anything[ORIGINAL_ERROR]);
+                    } else {
+                        resolve(value);
+                    }
                 }
-                i++;
+            } else {
+                reject(new TypeError(NOT_ARRAY));
             }
         });
     };
 
     Promise.all = function (values) {
         return new Promise(function (resolve, reject) {
-            var thenables = 0;
-            var fulfilled = 0;
+            var fulfilledCount = 0;
+            var promiseCount = 0;
             var anything;
+            var length;
             var value;
-            var length = values.length;
-            var i = 0;
-            if (!isArray(values)) {
-                throw new TypeError(NOT_ARRAY);
-            }
-            values = values.slice(0);
-            while (i < length) {
-                value = values[i];
-                anything = toPromise(value);
-                if (isPromise(anything)) {
-                    thenables++;
-                    anything.then(
-                        function (index) {
-                            return function (value) {
-                                values[index] = value;
-                                fulfilled++;
-                                if (fulfilled == thenables) {
-                                    resolve(values);
-                                }
-                            };
-                        }(i),
-                        reject
-                    );
-                } else if (isInternalError(anything)) {
-                    reject(anything[ORIGINAL_ERROR]);
-                } else {
-                    //[1, , 3] → [1, undefined, 3]
-                    values[i] = value;
+            var i;
+            if (isArray(values)) {
+                values = values.slice(0);
+                length = values.length;
+                for (i = 0; i < length; i++) {
+                    value = values[i];
+                    anything = toPromise(value);
+                    if (isPromise(anything)) {
+                        promiseCount++;
+                        anything.then(
+                            function (index) {
+                                return function (value) {
+                                    values[index] = value;
+                                    fulfilledCount++;
+                                    if (fulfilledCount == promiseCount) {
+                                        resolve(values);
+                                    }
+                                };
+                            }(i),
+                            reject
+                        );
+                    } else if (isInternalError(anything)) {
+                        reject(anything[ORIGINAL_ERROR]);
+                    } else {
+                        //[1, , 3] → [1, undefined, 3]
+                        values[i] = value;
+                    }
                 }
-                i++;
-            }
-            if (!thenables) {
-                resolve(values);
+                if (!promiseCount) {
+                    resolve(values);
+                }
+            } else {
+                reject(new TypeError(NOT_ARRAY));
             }
         });
     };
