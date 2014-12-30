@@ -84,8 +84,12 @@
         throw reason;
     }
 
-    function call(callback) {
-        callback();
+    function callEach(callbacks) {
+        var length = callbacks.length;
+        var i;
+        for (i = 0; i < length; i++) {
+            callbacks[i]();
+        }
     }
 
     function Promise(resolver) {
@@ -132,7 +136,7 @@
         } else {
             promise[STATUS] = FULFILLED;
             promise[VALUE] = value;
-            promise[ON_FUlFILLED].forEach(call);
+            callEach(promise[ON_FUlFILLED]);
             clearQueue(promise);
         }
     }
@@ -140,7 +144,7 @@
     function rejectPromise(promise, reason) {
         promise[STATUS] = REJECTED;
         promise[VALUE] = reason;
-        promise[ON_REJECTED].forEach(call);
+        callEach(promise[ON_REJECTED]);
         clearQueue(promise);
     }
 

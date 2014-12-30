@@ -31,25 +31,9 @@
             };
         }
     </script>
-
     <!--[if IE 8]>
-    <script>
-        if (!Array.prototype.forEach) {
-            Array.prototype.forEach = function (func, boundThis) {
-                var length = this.length,
-                    i = 0;
-                while (i < length) {
-                    if (i in this) {
-                        func.call(boundThis, this[i], i, this);
-                    }
-                    i++;
-                }
-            };
-        }
-    </script>
     <script src="setimmediate/setimmediate-ie8.js"></script>
     <![endif]-->
-
     <script src="setimmediate/setimmediate.js"></script>
     <script>
         if (window.location.search.indexOf('native') == -1) {
