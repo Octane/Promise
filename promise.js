@@ -8,19 +8,28 @@
  */
 (function (global) {'use strict';
 
-    var setImmediate = global.setImmediate || require('timers').setImmediate,
-        CHAINING_CYCLE = 'then() cannot return same Promise that it resolves.';
+    var STATUS = '[[PromiseStatus]]';
+    var VALUE = '[[PromiseValue]]';
+    var ON_FUlFILLED = '[[OnFulfilled]]';
+    var ON_REJECTED = '[[OnRejected]]';
+    var ORIGINAL_ERROR = '[[OriginalError]]';
+    var PENDING = 'pending';
+    var INTERNAL_PENDING = 'internal ' + PENDING;
+    var FULFILLED = 'fulfilled';
+    var REJECTED = 'rejected';
+    var CHAINING_CYCLE = 'then() cannot return same Promise that it resolves.';
+    var setImmediate = global.setImmediate || require('timers').setImmediate;
 
     function InternalError(originalError) {
-        this.originalError = originalError;
+        this[ORIGINAL_ERROR] = originalError;
     }
 
-    function toPromise(anything, synchronous) {
+    function toPromise(anything, synchronously) {
         var then;
         if (isPromise(anything)) {
             return anything;
         }
-        if(Object(anything) === anything) {
+        if(isObject(anything)) {
             try {
                 then = anything.then;
             } catch (error) {
@@ -28,7 +37,7 @@
             }
             if (isCallable(then)) {
                 return new Promise(function (resolve, reject) {
-                    if (synchronous) {
+                    if (synchronously) {
                         then.call(anything, resolve, reject);
                     } else {
                         setImmediate(function () {
@@ -45,6 +54,11 @@
         return null;
     }
 
+    function isObject(anything) {
+        //Object.create(null) instanceof Object → false
+        return Object(anything) === anything;
+    }
+
     function isCallable(anything) {
         return 'function' == typeof anything;
     }
@@ -55,10 +69,6 @@
 
     function isInternalError(anything) {
         return anything instanceof InternalError;
-    }
-
-    function isSettled(promise) {
-        return promise._fulfilled || promise._rejected;
     }
 
     function identity(value) {
@@ -73,40 +83,144 @@
         callback();
     }
 
-    function dive(promise, onFulfilled, onRejected) {
-        function interimOnFulfilled(value) {
-            var anything = toPromise(value);
-            if (isPromise(anything)) {
-                anything.then(interimOnFulfilled, interimOnRejected);
-            } else if (isInternalError(anything)) {
-                onRejected(anything.originalError);
-            } else {
-                onFulfilled(value);
-            }
-        }
-        function interimOnRejected(reason) {
-            var anything = toPromise(reason);
-            if (isPromise(anything)) {
-                anything.then(interimOnFulfilled, interimOnRejected);
-            } else if (isInternalError(anything)) {
-                onRejected(anything.originalError);
-            } else {
-                onRejected(reason);
-            }
-        }
-        promise.then(interimOnFulfilled, interimOnRejected);
+    function Promise(resolver) {
+        var promise = this;
+        promise[STATUS] = PENDING;
+        promise[VALUE] = undefined;
+        promise[ON_FUlFILLED] = [];
+        promise[ON_REJECTED] = [];
+        resolvePromise(promise, resolver);
     }
 
-    function Promise(resolver) {
-        this._pending = false;
-        this._fulfilled = false;
-        this._rejected = false;
-        this._value = undefined;
-        this._reason = undefined;
-        this._onFulfilled = [];
-        this._onRejected = [];
-        this._resolve(resolver);
+    function resolvePromise(promise, resolver) {
+        function resolve(value) {
+            if (promise[STATUS] == PENDING) {
+                fulfillPromise(promise, value);
+            }
+        }
+        function reject(reason) {
+            if (promise[STATUS] == PENDING) {
+                rejectPromise(promise, reason);
+            }
+        }
+        try {
+            resolver(resolve, reject);
+        } catch(error) {
+            reject(error);
+        }
     }
+
+    function fulfillPromise(promise, value) {
+        var anything = toPromise(value, true);
+        if (isPromise(anything)) {
+            promise[STATUS] = INTERNAL_PENDING;
+            anything.then(
+                function (value) {
+                    fulfillPromise(promise, value);
+                },
+                function (reason) {
+                    rejectPromise(promise, reason);
+                }
+            );
+        } else if (isInternalError(anything)) {
+            rejectPromise(promise, anything[ORIGINAL_ERROR]);
+        } else {
+            promise[STATUS] = FULFILLED;
+            promise[VALUE] = value;
+            promise[ON_FUlFILLED].forEach(call);
+            clearQueue(promise);
+        }
+    }
+
+    function rejectPromise(promise, reason) {
+        promise[STATUS] = REJECTED;
+        promise[VALUE] = reason;
+        promise[ON_REJECTED].forEach(call);
+        clearQueue(promise);
+    }
+
+    function enqueue(promise, onFulfilled, onRejected) {
+        promise[ON_FUlFILLED].push(onFulfilled);
+        promise[ON_REJECTED].push(onRejected);
+    }
+
+    function clearQueue(promise) {
+        delete promise[ON_FUlFILLED];
+        delete promise[ON_REJECTED];
+    }
+
+    function performPromiseThen(promise, onFulfilled, onRejected) {
+        var nextPromise;
+        onFulfilled = isCallable(onFulfilled) ? onFulfilled : identity;
+        onRejected = isCallable(onRejected) ? onRejected : thrower;
+        nextPromise = new Promise(function (resolve, reject) {
+            function asyncOnFulfilled() {
+                setImmediate(function () {
+                    var anything;
+                    var value;
+                    try {
+                        value = onFulfilled(promise[VALUE]);
+                        if (nextPromise === value) {
+                            throw new TypeError(CHAINING_CYCLE);
+                        }
+                    } catch (error) {
+                        reject(error);
+                        return;
+                    }
+                    anything = toPromise(value);
+                    if (isPromise(anything)) {
+                        anything.then(resolve, reject);
+                    } else if (isInternalError(anything)) {
+                        reject(anything[ORIGINAL_ERROR]);
+                    } else {
+                        resolve(value);
+                    }
+                });
+            }
+            function asyncOnRejected() {
+                setImmediate(function () {
+                    var anything;
+                    var reason;
+                    try {
+                        reason = onRejected(promise[VALUE]);
+                        if (nextPromise === reason) {
+                            throw new TypeError(CHAINING_CYCLE);
+                        }
+                    } catch (error) {
+                        reject(error);
+                        return;
+                    }
+                    anything = toPromise(reason);
+                    if (isPromise(anything)) {
+                        anything.then(resolve, reject);
+                    } else if (isInternalError(anything)) {
+                        reject(anything[ORIGINAL_ERROR]);
+                    } else {
+                        resolve(reason);
+                    }
+                });
+            }
+            switch (promise[STATUS]) {
+                case FULFILLED:
+                    asyncOnFulfilled();
+                    break;
+                case REJECTED:
+                    asyncOnRejected();
+                    break;
+                default:
+                    enqueue(promise, asyncOnFulfilled, asyncOnRejected);
+            }
+        });
+        return nextPromise;
+    }
+
+    Promise.prototype.then = function (onFulfilled, onRejected) {
+        return performPromiseThen(this, onFulfilled, onRejected);
+    };
+
+    Promise.prototype['catch'] =  function (onRejected) {
+        return performPromiseThen(this, identity, onRejected);
+    };
 
     Promise.resolve = function (value) {
         var anything = toPromise(value);
@@ -114,9 +228,7 @@
             return anything;
         }
         if (isInternalError(anything)) {
-            return new Promise(function (resolve, reject) {
-                reject(anything.originalError);
-            });
+            return Promise.reject(anything[ORIGINAL_ERROR]);
         }
         return new Promise(function (resolve) {
             resolve(value);
@@ -131,17 +243,17 @@
 
     Promise.race = function (values) {
         return new Promise(function (resolve, reject) {
-            var anything,
-                value,
-                length = values.length,
-                i = 0;
+            var anything;
+            var value;
+            var length = values.length;
+            var i = 0;
             while (i < length) {
                 value = values[i];
                 anything = toPromise(value);
                 if (isPromise(anything)) {
-                    dive(anything, resolve, reject);
+                    anything.then(resolve, reject);
                 } else if (isInternalError(anything)) {
-                    reject(anything.originalError);
+                    reject(anything[ORIGINAL_ERROR]);
                 } else {
                     resolve(value);
                 }
@@ -152,20 +264,19 @@
 
     Promise.all = function (values) {
         return new Promise(function (resolve, reject) {
-            var thenables = 0,
-                fulfilled = 0,
-                anything,
-                value,
-                length = values.length,
-                i = 0;
+            var thenables = 0;
+            var fulfilled = 0;
+            var anything;
+            var value;
+            var length = values.length;
+            var i = 0;
             values = values.slice(0);
             while (i < length) {
                 value = values[i];
                 anything = toPromise(value);
                 if (isPromise(anything)) {
                     thenables++;
-                    dive(
-                        anything,
+                    anything.then(
                         function (index) {
                             return function (value) {
                                 values[index] = value;
@@ -178,7 +289,7 @@
                         reject
                     );
                 } else if (isInternalError(anything)) {
-                    reject(anything.originalError);
+                    reject(anything[ORIGINAL_ERROR]);
                 } else {
                     //[1, , 3] → [1, undefined, 3]
                     values[i] = value;
@@ -189,157 +300,6 @@
                 resolve(values);
             }
         });
-    };
-
-    Promise.prototype = {
-
-        constructor: Promise,
-
-        _resolve: function (resolver) {
-
-            var promise = this;
-
-            function resolve(value) {
-                promise._fulfill(value);
-            }
-
-            function reject(reason) {
-                promise._reject(reason);
-            }
-
-            try {
-                resolver(resolve, reject);
-            } catch(error) {
-                if (!isSettled(promise)) {
-                    reject(error);
-                }
-            }
-
-        },
-
-        _fulfill: function (value) {
-            var promise = this,
-                anything;
-            if (!isSettled(promise) && !promise._pending) {
-                anything = toPromise(value, true);
-                if (isPromise(anything)) {
-                    promise._pending = true;
-                    anything.then(
-                        function (value) {
-                            promise._pending = false;
-                            promise._fulfill(value);
-                        },
-                        function (reason) {
-                            promise._pending = false;
-                            promise._reject(reason);
-                        }
-                    );
-                } else if (isInternalError(anything)) {
-                    promise._reject(anything.originalError);
-                } else {
-                    promise._fulfilled = true;
-                    promise._value = value;
-                    promise._onFulfilled.forEach(call);
-                    promise._clearQueue();
-                }
-            }
-        },
-
-        _reject: function (reason) {
-            if (!isSettled(this) && !this._pending) {
-                this._rejected = true;
-                this._reason = reason;
-                this._onRejected.forEach(call);
-                this._clearQueue();
-            }
-        },
-
-        _enqueue: function (onFulfilled, onRejected) {
-            this._onFulfilled.push(onFulfilled);
-            this._onRejected.push(onRejected);
-        },
-
-        _clearQueue: function () {
-            this._onFulfilled = [];
-            this._onRejected = [];
-        },
-
-        then: function (onFulfilled, onRejected) {
-
-            var promise = this,
-                nextPromise;
-
-            onFulfilled = isCallable(onFulfilled) ? onFulfilled : identity;
-            onRejected = isCallable(onRejected) ? onRejected : thrower;
-
-            nextPromise = new Promise(function (resolve, reject) {
-
-                function asyncOnFulfilled() {
-                    setImmediate(function () {
-                        var anything,
-                            value;
-                        try {
-                            value = onFulfilled(promise._value);
-                            if (nextPromise === value) {
-                                throw new TypeError(CHAINING_CYCLE);
-                            }
-                        } catch (error) {
-                            reject(error);
-                            return;
-                        }
-                        anything = toPromise(value);
-                        if (isPromise(anything)) {
-                            anything.then(resolve, reject);
-                        } else if (isInternalError(anything)) {
-                            reject(anything.originalError);
-                        } else {
-                            resolve(value);
-                        }
-                    });
-                }
-
-                function asyncOnRejected() {
-                    setImmediate(function () {
-                        var anything,
-                            reason;
-                        try {
-                            reason = onRejected(promise._reason);
-                            if (nextPromise === reason) {
-                                throw new TypeError(CHAINING_CYCLE);
-                            }
-                        } catch (error) {
-                            reject(error);
-                            return;
-                        }
-                        anything = toPromise(reason);
-                        if (isPromise(anything)) {
-                            anything.then(resolve, reject);
-                        } else if (isInternalError(anything)) {
-                            reject(anything.originalError);
-                        } else {
-                            resolve(reason);
-                        }
-                    });
-                }
-
-                if (promise._fulfilled) {
-                    asyncOnFulfilled();
-                } else if (promise._rejected) {
-                    asyncOnRejected();
-                } else {
-                    promise._enqueue(asyncOnFulfilled, asyncOnRejected);
-                }
-
-            });
-
-            return nextPromise;
-
-        },
-
-        'catch': function (onRejected) {
-            return this.then(undefined, onRejected);
-        }
-
     };
 
     if ('undefined' != typeof module && module.exports) {
