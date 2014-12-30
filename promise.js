@@ -6,7 +6,7 @@
  * Released under the MIT license
  * github.com/Octane/Promise
  */
-(function (global) {'use strict';
+(function (global, TypeError) {'use strict';
 
     var STATUS = '[[PromiseStatus]]';
     var VALUE = '[[PromiseValue]]';
@@ -17,6 +17,7 @@
     var INTERNAL_PENDING = 'internal ' + PENDING;
     var FULFILLED = 'fulfilled';
     var REJECTED = 'rejected';
+    var NOT_ARRAY = 'not an array.';
     var CHAINING_CYCLE = 'then() cannot return same Promise that it resolves.';
     var setImmediate = global.setImmediate || require('timers').setImmediate;
 
@@ -57,6 +58,10 @@
     function isObject(anything) {
         //Object.create(null) instanceof Object → false
         return Object(anything) === anything;
+    }
+
+    function isArray(anything) {
+        return '[object Array]' == Object.prototype.toString.call(anything);
     }
 
     function isCallable(anything) {
@@ -227,11 +232,12 @@
         if (isPromise(anything)) {
             return anything;
         }
-        if (isInternalError(anything)) {
-            return Promise.reject(anything[ORIGINAL_ERROR]);
-        }
-        return new Promise(function (resolve) {
-            resolve(value);
+        return new Promise(function (resolve, reject) {
+            if (isInternalError(anything)) {
+                reject(anything[ORIGINAL_ERROR]);
+            } else {
+                resolve(value);
+            }
         });
     };
 
@@ -247,6 +253,9 @@
             var value;
             var length = values.length;
             var i = 0;
+            if (!isArray(values)) {
+                throw new TypeError(NOT_ARRAY);
+            }
             while (i < length) {
                 value = values[i];
                 anything = toPromise(value);
@@ -270,6 +279,9 @@
             var value;
             var length = values.length;
             var i = 0;
+            if (!isArray(values)) {
+                throw new TypeError(NOT_ARRAY);
+            }
             values = values.slice(0);
             while (i < length) {
                 value = values[i];
@@ -308,4 +320,4 @@
         global.Promise = Promise;
     }
 
-}(this));
+}(this, TypeError));
