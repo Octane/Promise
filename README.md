@@ -23,12 +23,15 @@ bower install promises
 
 ##Dependencies
 
- - The Promise polyfill requieres `setImmediate` ([msdn](http://msdn.microsoft.com/en-us/library/ie/hh773176), [nodejs](http://nodejs.org/api/timers.html#timers_setimmediate_callback_arg), [polyfill](https://github.com/Octane/setImmediate/)).
+The Promise polyfill requieres `setImmediate` ([msdn](http://msdn.microsoft.com/en-us/library/ie/hh773176), [nodejs](http://nodejs.org/api/timers.html#timers_setimmediate_callback_arg), [polyfill](https://github.com/Octane/setImmediate/)).
 
 ##Tests
 
 <a href="https://github.com/promises-aplus/promises-tests"><img src="http://promises-aplus.github.com/promises-spec/assets/logo-small.png" alt="Promises/A+ logo" width="41" valign="middle"> Promises/A+ compliant</a>
 ```
+git clone https://github.com/Octane/Promise.git
+cd Promise
+npm install
 npm test
 ```
 
