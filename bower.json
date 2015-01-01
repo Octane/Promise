@@ -26,7 +26,6 @@
   },
   "ignore": [
     "*",
-    "!README.md",
     "!promise.js"
   ]
 }

@@ -15,9 +15,7 @@
     "url": "https://github.com/Octane/Promise.git"
   },
   "files": [
-    "README.md",
     "promise.js",
-    "setimmediate/README.md",
     "setimmediate/setimmediate.js",
     "setimmediate/setimmediate-ie8.js"
   ],
