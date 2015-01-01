@@ -20,7 +20,11 @@
     var NOT_ARRAY = 'not an array.';
     var REQUIRES_NEW = 'constructor Promise requires "new".';
     var CHAINING_CYCLE = 'then() cannot return same Promise that it resolves.';
+
     var setImmediate = global.setImmediate || require('timers').setImmediate;
+    var isArray = Array.isArray || function (anything) {
+        return Object.prototype.toString.call(anything) == '[object Array]';
+    };
 
     function InternalError(originalError) {
         this[ORIGINAL_ERROR] = originalError;
@@ -35,12 +39,8 @@
         return Object(anything) === anything;
     }
 
-    function isArray(anything) {
-        return  Object.prototype.toString.call(anything) == '[object Array]';
-    }
-
     function isCallable(anything) {
-        return 'function' == typeof anything;
+        return typeof anything == 'function';
     }
 
     function isPromise(anything) {
@@ -55,14 +55,6 @@
         throw reason;
     }
 
-    function callEach(callbacks) {
-        var i;
-        var length = callbacks.length;
-        for (i = 0; i < length; i++) {
-            callbacks[i]();
-        }
-    }
-
     function enqueue(promise, onFulfilled, onRejected) {
         if (!promise[ON_FUlFILLED]) {
             promise[ON_FUlFILLED] = [];
@@ -75,6 +67,25 @@
     function clearAllQueues(promise) {
         delete promise[ON_FUlFILLED];
         delete promise[ON_REJECTED];
+    }
+
+    function callEach(queue) {
+        var i;
+        var length = queue.length;
+        for (i = 0; i < length; i++) {
+            queue[i]();
+        }
+    }
+
+    function call(resolve, reject, value) {
+        var anything = toPromise(value);
+        if (isPromise(anything)) {
+            anything.then(resolve, reject);
+        } else if (isInternalError(anything)) {
+            reject(anything[ORIGINAL_ERROR]);
+        } else {
+            resolve(value);
+        }
     }
 
     function toPromise(anything) {
@@ -177,51 +188,25 @@
             onFulfilled = isCallable(onFulfilled) ? onFulfilled : identity;
             onRejected = isCallable(onRejected) ? onRejected : thrower;
             nextPromise = new Promise(function (resolve, reject) {
+                function tryCall(func) {
+                    var value;
+                    try {
+                        value = func(promise[VALUE]);
+                    } catch (error) {
+                        reject(error);
+                        return;
+                    }
+                    if (value === nextPromise) {
+                        reject(new TypeError(CHAINING_CYCLE));
+                    } else {
+                        call(resolve, reject, value);
+                    }
+                }
                 function asyncOnFulfilled() {
-                    setImmediate(function () {
-                        var anything;
-                        var value;
-                        try {
-                            value = onFulfilled(promise[VALUE]);
-                            if (nextPromise === value) {
-                                throw new TypeError(CHAINING_CYCLE);
-                            }
-                        } catch (error) {
-                            reject(error);
-                            return;
-                        }
-                        anything = toPromise(value);
-                        if (isPromise(anything)) {
-                            anything.then(resolve, reject);
-                        } else if (isInternalError(anything)) {
-                            reject(anything[ORIGINAL_ERROR]);
-                        } else {
-                            resolve(value);
-                        }
-                    });
+                    setImmediate(tryCall, onFulfilled);
                 }
                 function asyncOnRejected() {
-                    setImmediate(function () {
-                        var anything;
-                        var reason;
-                        try {
-                            reason = onRejected(promise[VALUE]);
-                            if (nextPromise === reason) {
-                                throw new TypeError(CHAINING_CYCLE);
-                            }
-                        } catch (error) {
-                            reject(error);
-                            return;
-                        }
-                        anything = toPromise(reason);
-                        if (isPromise(anything)) {
-                            anything.then(resolve, reject);
-                        } else if (isInternalError(anything)) {
-                            reject(anything[ORIGINAL_ERROR]);
-                        } else {
-                            resolve(reason);
-                        }
-                    });
+                    setImmediate(tryCall, onRejected);
                 }
                 switch (promise[STATUS]) {
                     case FULFILLED:
@@ -265,22 +250,12 @@
 
     Promise.race = function (values) {
         return new Promise(function (resolve, reject) {
-            var anything;
-            var length;
-            var value;
             var i;
+            var length;
             if (isArray(values)) {
                 length = values.length;
                 for (i = 0; i < length; i++) {
-                    value = values[i];
-                    anything = toPromise(value);
-                    if (isPromise(anything)) {
-                        anything.then(resolve, reject);
-                    } else if (isInternalError(anything)) {
-                        reject(anything[ORIGINAL_ERROR]);
-                    } else {
-                        resolve(value);
-                    }
+                    call(resolve, reject, values[i]);
                 }
             } else {
                 reject(new TypeError(NOT_ARRAY));
@@ -332,7 +307,7 @@
         });
     };
 
-    if ('undefined' != typeof module && module.exports) {
+    if (typeof module != 'undefined' && module.exports) {
         module.exports = global.Promise || Promise;
     } else if (!global.Promise) {
         global.Promise = Promise;
