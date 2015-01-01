@@ -893,7 +893,6 @@
 
 
         test('call thenable.then synchronously', function (assert) {
-            //2.3.3 Promise/A+
             var x = 0;
             var thenable = {
                 then: function () {
@@ -903,12 +902,7 @@
             new Promise(function (resolve) {
                 resolve(thenable);
             });
-            //assert(x === 1);
-            assert(true);
-            if (x === 0) {
-                //todo: browsers always call thenable.then asynchronously
-                console.log('warning: thenable.then called asynchronously');
-            }
+            assert(x === 0);
         });
 
         //github.com/getify/native-promise-only/issues/5

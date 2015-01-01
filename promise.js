@@ -14,7 +14,7 @@
     var ON_REJECTED = '[[OnRejected]]';
     var ORIGINAL_ERROR = '[[OriginalError]]';
     var PENDING = 'pending';
-    var INTERNAL_PENDING = 'internal ' + PENDING;
+    var INTERNAL_PENDING = 'internal pending';
     var FULFILLED = 'fulfilled';
     var REJECTED = 'rejected';
     var NOT_ARRAY = 'not an array.';
@@ -36,8 +36,7 @@
     }
 
     function isArray(anything) {
-        //todo remove
-        return '[object Array]' == Object.prototype.toString.call(anything);
+        return  Object.prototype.toString.call(anything) == '[object Array]';
     }
 
     function isCallable(anything) {
@@ -78,7 +77,7 @@
         delete promise[ON_REJECTED];
     }
 
-    function toPromise(anything, synchronously) {
+    function toPromise(anything) {
         var then;
         if (isPromise(anything)) {
             return anything;
@@ -91,17 +90,13 @@
             }
             if (isCallable(then)) {
                 return new Promise(function (resolve, reject) {
-                    if (synchronously) {
-                        then.call(anything, resolve, reject);
-                    } else {
-                        setImmediate(function () {
-                            try {
-                                then.call(anything, resolve, reject);
-                            } catch (error) {
-                                reject(error);
-                            }
-                        });
-                    }
+                    setImmediate(function () {
+                        try {
+                            then.call(anything, resolve, reject);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    });
                 });
             }
         }
@@ -127,8 +122,8 @@
     }
 
     function fulfillPromise(promise, value) {
-        var anything = toPromise(value, true);
         var queue;
+        var anything = toPromise(value);
         if (isPromise(anything)) {
             promise[STATUS] = INTERNAL_PENDING;
             anything.then(
@@ -343,4 +338,4 @@
         global.Promise = Promise;
     }
 
-}(this, TypeError));
+}(this));
