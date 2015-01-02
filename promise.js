@@ -178,54 +178,48 @@
         resolvePromise(promise, resolver);
     }
 
-    Promise.prototype = {
-
-        constructor: Promise,
-
-        then: function (onFulfilled, onRejected) {
-            var promise = this;
-            var nextPromise;
-            onFulfilled = isCallable(onFulfilled) ? onFulfilled : identity;
-            onRejected = isCallable(onRejected) ? onRejected : thrower;
-            nextPromise = new Promise(function (resolve, reject) {
-                function tryCall(func) {
-                    var value;
-                    try {
-                        value = func(promise[VALUE]);
-                    } catch (error) {
-                        reject(error);
-                        return;
-                    }
-                    if (value === nextPromise) {
-                        reject(new TypeError(CHAINING_CYCLE));
-                    } else {
-                        call(resolve, reject, value);
-                    }
+    Promise.prototype.then = function (onFulfilled, onRejected) {
+        var promise = this;
+        var nextPromise;
+        onFulfilled = isCallable(onFulfilled) ? onFulfilled : identity;
+        onRejected = isCallable(onRejected) ? onRejected : thrower;
+        nextPromise = new Promise(function (resolve, reject) {
+            function tryCall(func) {
+                var value;
+                try {
+                    value = func(promise[VALUE]);
+                } catch (error) {
+                    reject(error);
+                    return;
                 }
-                function asyncOnFulfilled() {
-                    setImmediate(tryCall, onFulfilled);
+                if (value === nextPromise) {
+                    reject(new TypeError(CHAINING_CYCLE));
+                } else {
+                    call(resolve, reject, value);
                 }
-                function asyncOnRejected() {
-                    setImmediate(tryCall, onRejected);
-                }
-                switch (promise[STATUS]) {
-                    case FULFILLED:
-                        asyncOnFulfilled();
-                        break;
-                    case REJECTED:
-                        asyncOnRejected();
-                        break;
-                    default:
-                        enqueue(promise, asyncOnFulfilled, asyncOnRejected);
-                }
-            });
-            return nextPromise;
-        },
+            }
+            function asyncOnFulfilled() {
+                setImmediate(tryCall, onFulfilled);
+            }
+            function asyncOnRejected() {
+                setImmediate(tryCall, onRejected);
+            }
+            switch (promise[STATUS]) {
+                case FULFILLED:
+                    asyncOnFulfilled();
+                    break;
+                case REJECTED:
+                    asyncOnRejected();
+                    break;
+                default:
+                    enqueue(promise, asyncOnFulfilled, asyncOnRejected);
+            }
+        });
+        return nextPromise;
+    };
 
-        'catch': function (onRejected) {
-            return this.then(identity, onRejected);
-        }
-
+    Promise.prototype['catch'] = function (onRejected) {
+        return this.then(identity, onRejected);
     };
 
     Promise.resolve = function (value) {
