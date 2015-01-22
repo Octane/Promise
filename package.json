@@ -1,37 +1,47 @@
 {
-  "name": "es6-promises",
-  "version": "1.0.9",
-  "description": "ES6 Promise polyfill",
-  "main": "promise.js",
-  "dependencies": {},
-  "devDependencies": {
-    "promises-aplus-tests": "*"
-  },
-  "scripts": {
-    "test": "promises-aplus-tests adapter.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Octane/Promise.git"
-  },
-  "files": [
-    "promise.js",
-    "setimmediate/setimmediate.js",
-    "setimmediate/setimmediate-ie8.js"
-  ],
-  "keywords": [
-    "promise",
-    "polyfill",
-    "es6",
-    "browser",
-    "client",
-    "server",
-    "async"
-  ],
-  "author": "Dmitry Korobkin <dmitry.korobkin@gmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Octane/Promise/issues"
-  },
-  "homepage": "https://github.com/Octane/Promise"
+	"name"       : "es6-promises",
+	"version"    : "1.0.9",
+	"author"     : "Dmitry Korobkin <dmitry.korobkin@gmail.com>",
+	"description": "ES6 Promise polyfill",
+	"keywords"   : [ "promise", "polyfill", "es6", "harmony", "async", "deferred" ],
+	"main"       : "index.js",
+
+	"homepage": "https://github.com/Octane/Promise",
+
+	"man": "README.md",
+
+	"engines": {
+		"node": ">=0.10.28"
+	},
+
+	"bugs": {
+		"url": "https://github.com/Octane/Promise/issues"
+	},
+
+	"scripts": {
+		"test": "mocha tests/custom && promises-aplus-tests tests/adapter"
+	},
+
+	"repository": {
+		"type": "git",
+		"url" : "https://github.com/Octane/Promise.git"
+	},
+
+	"files": [
+		"index.js",
+		"setimmediate/setimmediate.js",
+		"setimmediate/setimmediate-ie8.js"
+	],
+
+	"devDependencies": {
+		"promises-aplus-tests": "*",
+		"mocha"               : "~1.21.4"
+	},
+
+	"licenses": [
+		{
+			"type": "MIT",
+			"url" : "http: //www.opensource.org/licenses/mit-license.php"
+		}
+	]
 }
