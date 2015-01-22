@@ -1,6 +1,6 @@
 # ES6 Promise polyfill
 
-[![Build Status](https://travis-ci.org/monolithed/es6-promises.png)](https://travis-ci.org/monolithed/es6-promises)
+[![Build Status](https://travis-ci.org/monolithed/Promise.svg?branch=master)](https://travis-ci.org/monolithed/Promise)
 
 [![NPM](https://nodei.co/npm/es6-promises.png?downloads=true)](https://nodei.co/npm/es6-promises/)
 
