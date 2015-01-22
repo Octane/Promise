@@ -1,31 +1,25 @@
 {
-  "name": "Promise polyfill",
-  "main": "promise.js",
-  "version": "1.0.9",
-  "homepage": "https://github.com/Octane/Promise",
-  "authors": [
-    "Dmitry Korobkin <dmitry.korobkin@gmail.com>"
-  ],
-  "description": "ES6 Promise polyfill",
-  "moduleType": [
-    "node"
-  ],
-  "keywords": [
-    "promise",
-    "polyfill",
-    "es6",
-    "client",
-    "browser",
-    "server",
-    "nodejs",
-    "async"
-  ],
-  "license": "MIT",
-  "dependencies": {
-    "setImmediate": "*"
-  },
-  "ignore": [
-    "*",
-    "!promise.js"
-  ]
+	"name"       : "es6-promises",
+	"version"    : "1.0.9",
+	"author"     : "Dmitry Korobkin <dmitry.korobkin@gmail.com>",
+	"description": "ES6 Promise polyfill",
+	"keywords"   : [ "promise", "polyfill", "es6", "harmony", "async", "deferred" ],
+	"main"       : "index.js",
+
+	"homepage": "https://github.com/Octane/Promise",
+
+	"moduleType": [ "node" ],
+
+	"dependencies": {
+		"setImmediate": "*"
+	},
+
+	"ignore": [ "*", "!index.js" ],
+
+	"licenses": [
+		{
+			"type": "MIT",
+			"url" : "http: //www.opensource.org/licenses/mit-license.php"
+		}
+	]
 }

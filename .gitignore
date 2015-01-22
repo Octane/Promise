@@ -1,2 +1,115 @@
+# --------------------------
+# System
+# --------------------------
+
+*~
+*#*
+._*
+\#*
+
+# --------------------------
+# Object files
+# --------------------------
+
+*.o
+*.so
+*.lo
+*.a
+a.out
+*.out
+*.dll
+*.exe
+
+# --------------------------
+# Java
+# --------------------------
+
+*.com
+*.class
+
+# --------------------------
+# Git
+# --------------------------
+
+.gitconfig
+
+# --------------------------
+# Node
+# --------------------------
+
 node_modules
-index.js
+npm-shrinkwrap.json
+npm-debug.log
+
+# --------------------------
+# Erlang
+# --------------------------
+
+erl_crash.dump
+
+# --------------------------
+# Python
+# --------------------------
+
+__pycache__
+pip-log.txt
+pip-delete-this-directory.txt
+.installed.cfg
+*.py[cod]
+*.egg-info
+*.egg
+*.log
+
+# --------------------------
+# Python
+# --------------------------
+.sass-cache
+
+# --------------------------
+# IDEA
+# --------------------------
+
+.idea
+*.iml
+
+# --------------------------
+# Visual Studio
+# --------------------------
+
+*.old
+*.sln
+*.suo
+*.ncb
+*.sdf
+*.log
+*.tlog
+*.idb
+*.pdb
+*.scc
+*.user
+*.filters
+*.vsscc
+*.vbproj
+*.vspscc
+*.csproj
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.lastbuildstate
+*.unsuccessfulbuild
+*.cache
+Debug
+
+# --------------------------
+# Other
+# --------------------------
+
+*.bak
+*.tmp
+.DS_Store
+ehthumbs.db
+Thumbs.db
+Icon?
+.coveralls.yml
+/tmp
+/cache

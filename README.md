@@ -1,4 +1,10 @@
-#ES6 Promise polyfill
+# ES6 Promise polyfill
+
+[![Build Status](https://travis-ci.org/monolithed/Promise.svg?branch=master)](https://travis-ci.org/monolithed/Promise)
+
+[![NPM](https://nodei.co/npm/es6-promises.png?downloads=true)](https://nodei.co/npm/es6-promises/)
+
+
 
 To use the Promise polyfill, just drop two JavaScript files into your page:
 ```html
@@ -21,11 +27,11 @@ npm install es6-promises
 bower install promises
 ```
 
-##Dependencies
+## Dependencies
 
 The Promise polyfill requieres `setImmediate` ([msdn](http://msdn.microsoft.com/en-us/library/ie/hh773176), [nodejs](http://nodejs.org/api/timers.html#timers_setimmediate_callback_arg), [polyfill](https://github.com/Octane/setImmediate/)).
 
-##Tests
+## Tests
 
 <a href="https://github.com/promises-aplus/promises-tests"><img src="http://promises-aplus.github.com/promises-spec/assets/logo-small.png" alt="Promises/A+ logo" width="41" valign="middle"> Promises/A+ compliant</a>
 ```
@@ -35,6 +41,6 @@ npm install
 npm test
 ```
 
-##License
+## License
 
 The Promise polyfill is released under the [MIT license](https://github.com/Octane/Promise/blob/master/LICENSE).
