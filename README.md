@@ -1,10 +1,8 @@
 # ES6 Promise polyfill
 
-[![Build Status](https://travis-ci.org/monolithed/Promise.svg?branch=master)](https://travis-ci.org/monolithed/Promise)
+[![Build Status](https://travis-ci.org/Octane/Promise.svg?branch=master)](https://travis-ci.org/Octane/Promise)
 
 [![NPM](https://nodei.co/npm/es6-promises.png?downloads=true)](https://nodei.co/npm/es6-promises/)
-
-
 
 To use the Promise polyfill, just drop two JavaScript files into your page:
 ```html
