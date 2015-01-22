@@ -1,5 +1,5 @@
 /**
- * Promise polyfill v1.0.9
+ * Promise polyfill v1.0.10
  * requires setImmediate
  *
  * © 2014–2015 Dmitry Korobkin
