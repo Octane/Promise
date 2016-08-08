@@ -1,5 +1,5 @@
 {
-    "name": "Promise polyfill",
+    "name": "promise-polyfill",
     "version": "1.0.10",
     "description": "ES6 Promise polyfill",
     "keywords": [
